@@ -6,7 +6,7 @@ In a world full of ORM solutions that generally fall into one of two categories.
 1. Creates and tracks tables for you based on code.
 1. Requires you to copy the table structure into the code from the DB.
 
-I felt there should be a 3rd solution.
+I felt there should be a 3rd solution for this.
 
 - Use the database as a reference and have the code support that.
 
