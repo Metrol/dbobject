@@ -58,6 +58,24 @@ class Item implements DBObject
     }
 
     /**
+     * Provides the primary key field for this object
+     *
+     * @return string|null
+     */
+    public function getPrimaryKeyField()
+    {
+        $rtn = null;
+        $keys = $this->_objTable->getPrimaryKeys();
+
+        if ( count($keys) > 0 )
+        {
+            $rtn = $keys[0];
+        }
+
+        return $rtn;
+    }
+
+    /**
      * @inheritdoc
      */
     public function save()
@@ -239,10 +257,9 @@ class Item implements DBObject
 
         $table   = $this->_objTable->getSchema().'.';
         $table  .= $this->_objTable->getName();
-        $pkField = $this->_objTable->getPrimaryKeys()[0];
 
         $update->table($table)
             ->fieldValues($this->_objData)
-            ->where($pkField.' = ?', $this->_objPrimaryKeyValue);
+            ->where($this->getPrimaryKeyField().' = ?', $this->_objPrimaryKeyValue);
     }
 }
