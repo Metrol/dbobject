@@ -140,6 +140,8 @@ class Item implements DBObject
             $this->set($field, $value);
         }
 
+        $this->setId( $this->get($this->getPrimaryKeyField()) );
+
         $this->_objLoadStatus = self::LOADED;
 
         return $this;
