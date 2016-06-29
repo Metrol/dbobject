@@ -9,6 +9,7 @@
 namespace Metrol;
 
 use Metrol\DBTable;
+use Metrol\DBSql;
 
 /**
  * Describes the functionality that all DBObjects must be able to support.
@@ -121,6 +122,22 @@ interface DBObject
      * @return mixed|null
      */
     public function getId();
+
+    /**
+     * Provide the database connection used for this item
+     *
+     * @return \PDO
+     */
+    public function getDb();
+
+    /**
+     * Provide the SQL Driver used to create the queries for this item
+     *
+     * @return DBSql\DriverInterface
+     *
+     * @throws \UnexpectedValueException When no engine is found
+     */
+    public function getSqlDriver();
 
     /**
      * Provide the database table that was set in this object

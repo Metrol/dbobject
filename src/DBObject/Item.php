@@ -117,7 +117,7 @@ class Item implements DBObject
             throw new \UnderflowException('No primary key value specified. Unable to load');
         }
 
-        $sql = DBSql::PostgreSQL()->select()
+        $sql = $this->getSqlDriver()->select()
                     ->from( $tableName )
                     ->where( $primaryKey . ' = ?', [$id]);
 
@@ -156,7 +156,7 @@ class Item implements DBObject
 
         $tableName  = $this->_objTable->getName();
 
-        $sql = DBSql::PostgreSQL()
+        $sql = $this->getSqlDriver()
             ->select()
             ->from( $tableName );
 
@@ -225,6 +225,16 @@ class Item implements DBObject
     }
 
     /**
+     * Provide the database connection used for this item
+     *
+     * @return PDO
+     */
+    public function getDb()
+    {
+        return $this->_objDb;
+    }
+
+    /**
      * Provide the database table to be used for this DB Item
      *
      * @return DBTable
@@ -235,12 +245,29 @@ class Item implements DBObject
     }
 
     /**
+     * Provide the SQL Driver based on the type of DBTable provided
+     *
+     * @return DBSql\DriverInterface
+     *
+     * @throws \UnexpectedValueException  When no engine is found
+     */
+    public function getSqlDriver()
+    {
+        if ( $this->_objTable instanceof DBTable\PostgreSQL )
+        {
+            return DBSql::PostgreSQL();
+        }
+
+        throw new \UnexpectedValueException('Unsupported SQL Engine Requested');
+    }
+
+    /**
      * Insert a new record from the data in this object
      *
      */
     protected function insertRecord()
     {
-        $insert = DBSql::PostgreSQL()->insert();
+        $insert = $this->getSqlDriver()->insert();
 
         $table   = $this->_objTable->getSchema().'.';
         $table  .= $this->_objTable->getName();
@@ -257,7 +284,7 @@ class Item implements DBObject
      */
     protected function updateRecord()
     {
-        $update = DBSql::PostgreSQL()->update();
+        $update = $this->getSqlDriver()->update();
 
         $table   = $this->_objTable->getSchema().'.';
         $table  .= $this->_objTable->getName();
