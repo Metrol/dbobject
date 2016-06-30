@@ -99,28 +99,4 @@ trait GetSetTrait
 
         return $this;
     }
-
-    /**
-     * Set the primary key value for this object
-     *
-     * @param mixed $value
-     *
-     * @return $this
-     */
-    public function setId($value)
-    {
-        $this->_objPrimaryKeyValue = $value;
-
-        return $this;
-    }
-
-    /**
-     * Provide the primary key value
-     *
-     * @return mixed
-     */
-    public function getId()
-    {
-        return $this->_objPrimaryKeyValue;
-    }
 }
