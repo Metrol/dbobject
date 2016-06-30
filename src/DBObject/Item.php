@@ -65,11 +65,50 @@ class Item implements DBObject
     public function getPrimaryKeyField()
     {
         $rtn = null;
+
         $keys = $this->_objTable->getPrimaryKeys();
 
         if ( count($keys) > 0 )
         {
             $rtn = $keys[0];
+        }
+
+        return $rtn;
+    }
+
+    /**
+     * Set the primary key value for this object
+     *
+     * @param mixed $value
+     *
+     * @return $this
+     */
+    public function setId($value)
+    {
+        $pkField = $this->getPrimaryKeyField();
+
+        if ( $pkField !== null )
+        {
+            $this->set($pkField, $value);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Provide the primary key value
+     *
+     * @return mixed|null
+     */
+    public function getId()
+    {
+        $rtn = null;
+
+        $pkField = $this->getPrimaryKeyField();
+
+        if ( $pkField !== null )
+        {
+            $rtn = $this->get($pkField);
         }
 
         return $rtn;
@@ -267,15 +306,36 @@ class Item implements DBObject
      */
     protected function insertRecord()
     {
+        $rtn      = null;
+        $pkField  = null;
+        $fetchKey = false;
+
         $insert = $this->getSqlDriver()->insert();
 
-        $table   = $this->_objTable->getSchema().'.';
-        $table  .= $this->_objTable->getName();
+        $insert->table($this->getDBTable()->getFQN())
+            ->fieldValues($this->_objData);
 
-        $insert->table($table)->fieldValues($this->_objData);
+        if ( $this->_objTable instanceof DBTable\PostgreSQL )
+        {
+            /**
+             * @var DBSql\PostgreSQL\Insert $insert
+             */
+            if ( !empty($this->getDBTable()->getPrimaryKeys()) )
+            {
+                $pkField = $this->getDBTable()->getPrimaryKeys()[0];
+                $insert->returning($pkField);
+                $fetchKey = true;
+            }
+        }
 
         $statement = $this->_objDb->prepare($insert->output());
         $statement->execute($insert->getBindings());
+
+        if ( $fetchKey )
+        {
+            $result = $statement->fetch(PDO::FETCH_ASSOC);
+            $this->setId($result[$pkField]);
+        }
     }
 
     /**
@@ -284,14 +344,17 @@ class Item implements DBObject
      */
     protected function updateRecord()
     {
+        // Cannot update a record without a primary key
+        if ( empty($this->getDBTable()->getPrimaryKeys()) )
+        {
+            return;
+        }
+
         $update = $this->getSqlDriver()->update();
 
-        $table   = $this->_objTable->getSchema().'.';
-        $table  .= $this->_objTable->getName();
-
-        $update->table($table)
+        $update->table($this->getDBTable()->getFQN())
             ->fieldValues($this->_objData)
-            ->where($this->getPrimaryKeyField().' = ?', [$this->_objPrimaryKeyValue]);
+            ->where($this->getPrimaryKeyField().' = ?', [$this->getId()]);
 
         $statement = $this->_objDb->prepare($update->output());
         $statement->execute($update->getBindings());
