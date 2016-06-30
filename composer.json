@@ -32,5 +32,10 @@
         "psr-4": {
             "Metrol\\": "src/"
         }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Metrol\\Tests\\": "tests/"
+        }
     }
 }
