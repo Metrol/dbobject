@@ -151,7 +151,7 @@ class PostgreSQLObjectTest extends \PHPUnit_Framework_TestCase
             $dbo->save();
         }
 
-        $set = new DBObject\Set(new objtest1($this->db));
+        $set = new DBObject\Item\Set(new objtest1($this->db));
         $set->addOrder('sometext')->run();
         $this->assertCount(9, $set);
 
@@ -159,7 +159,7 @@ class PostgreSQLObjectTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals('Alpha', $topItem->sometext);
 
-        $set = new DBObject\Set(new objtest1($this->db));
+        $set = new DBObject\Item\Set(new objtest1($this->db));
         $set->addOrder('anum', 'DESC')->run();
 
         $this->assertCount(9, $set);
