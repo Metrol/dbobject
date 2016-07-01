@@ -10,6 +10,8 @@ namespace Metrol\DBObject;
 
 use Metrol\DBObject;
 use Metrol\DBSql;
+use PDO;
+use stdClass;
 
 /**
  * Handles generating and storing a set of database records as object
@@ -17,19 +19,23 @@ use Metrol\DBSql;
  */
 class Set implements \Iterator, \Countable
 {
+    const POSTGRESQL     = 'pgsql';
+    const MYSQL          = 'mysql';
+    const SQLITE         = 'sqlite';
+
     /**
      * The record data for this object in key/value pairs
      *
-     * @var DBObject[]
+     * @var stdClass[]
      */
     protected $_objDataSet;
 
     /**
-     * The object type that will be making up this set.
+     * The database connection to be used for the queries to be run
      *
-     * @var DBObject
+     * @var PDO
      */
-    protected $_objItem;
+    protected $_db;
 
     /**
      * SQL SELECT Driver used to build the query that populates this set
@@ -39,13 +45,15 @@ class Set implements \Iterator, \Countable
     protected $_sql;
 
     /**
-     * Instantiate the object and store the sample DB Item as a reference
+     * Instantiate the object set.
+     * Stores the database connection locally.
+     * Initializes the SQL driver to be used.
      *
-     * @param DBObject $item
+     * @param PDO $db
      */
-    public function __construct(DBObject $item)
+    public function __construct(PDO $db)
     {
-        $this->_objItem    = $item;
+        $this->_db         = $db;
         $this->_objDataSet = array();
 
         $this->initSqlDriver();
@@ -68,16 +76,16 @@ class Set implements \Iterator, \Countable
      */
     public function run()
     {
-        $statement = $this->_objItem->getDb()->prepare($this->_sql->output());
+        $statement = $this->getDb()->prepare($this->_sql->output());
         $statement->execute($this->_sql->getBindings());
 
         while ( $row = $statement->fetch(\PDO::FETCH_ASSOC) )
         {
-            $item = clone $this->_objItem;
+            $item = new stdClass;
 
             foreach ( $row as $field => $value )
             {
-                $item->set($field, $value);
+                $item->$field = $value;
             }
 
             $this->_objDataSet[] = $item;
@@ -93,110 +101,10 @@ class Set implements \Iterator, \Countable
      */
     public function runForCount()
     {
-        $statement = $this->_objItem->getDb()->prepare($this->_sql->output());
+        $statement = $this->getDb()->prepare($this->_sql->output());
         $statement->execute($this->_sql->getBindings());
 
         return $statement->rowCount();
-    }
-
-    /**
-     * Run the assembled query, but return only the information from the
-     * specified field in an array.
-     *
-     * The data set stored in this object is not populated or affected in any
-     * way by running this.
-     *
-     * @param string $fieldName
-     *
-     * @return array
-     */
-    public function runForField($fieldName)
-    {
-        $this->getSqlSelect()->fields([$fieldName]);
-
-        $statement = $this->_objItem->getDb()->prepare($this->_sql->output());
-        $statement->execute($this->_sql->getBindings());
-
-        $rtn = [];
-
-        while ( $row = $statement->fetch(\PDO::FETCH_ASSOC) )
-        {
-            $rtn[] = $row[$fieldName];
-        }
-
-        // Put the fields to come out back to the default
-        $this->getSqlSelect()->fields(['*']);
-
-        return $rtn;
-    }
-
-    /**
-     * Add a filter with bound values
-     *
-     * @param string $whereClause
-     * @param array  $bindings
-     *
-     * @return $this
-     */
-    public function addFilter($whereClause, array $bindings = null)
-    {
-        $this->getSqlSelect()->where($whereClause, $bindings);
-
-        return $this;
-    }
-
-    /**
-     * Adds a filter where a field must have a value in one of the items in
-     * an array.
-     *
-     * @param string $fieldName Which field to filter on
-     * @param array  $values    Values to match
-     *
-     * @return $this
-     */
-    public function addValueInFilter($fieldName, array $values)
-    {
-        $this->getSqlSelect()->whereIn($fieldName, $values);
-
-        return $this;
-    }
-
-    /**
-     * Add a sort field to the ordering of this set
-     *
-     * @param string $fieldName
-     * @param string $direction
-     *
-     * @return $this
-     */
-    public function addOrder($fieldName, $direction = null)
-    {
-        $this->getSqlSelect()->order($fieldName, $direction);
-
-        return $this;
-    }
-
-    /**
-     * Filters the list based on the primary key value of the DBObject passed
-     * in.
-     *
-     * @param DBObject $dbo
-     * @param string   $keyField This is field in the table being queried
-     *
-     * @return $this
-     */
-    public function addDBObjectFilter(DBObject $dbo, $keyField = null)
-    {
-        $field = $keyField;
-
-        if ( $field == null )
-        {
-            $field = $dbo->getDBTable()->getPrimaryKeys()[0];
-        }
-
-        $this->getSqlSelect()->where( $field.' = ?', $dbo->getId() );
-
-        return $this;
     }
 
     /**
@@ -207,21 +115,6 @@ class Set implements \Iterator, \Countable
     public function getSqlSelect()
     {
         return $this->_sql;
-    }
-
-    /**
-     * Adds an item to the set
-     *
-     * @param DBObject $dbo
-     *
-     * @return $this
-     */
-    public function add(DBObject $dbo)
-    {
-        if ( $dbo instanceof $this->_objItem )
-        {
-            $this->_objDataSet[] = $dbo;
-        }
     }
 
     /**
@@ -237,15 +130,35 @@ class Set implements \Iterator, \Countable
     }
 
     /**
+     * Provide the database connection used in this listing
+     *
+     * @return \PDO
+     */
+    public function getDb()
+    {
+        return $this->_db;
+    }
+
+    /**
      * Initialize the SQL driver and fill in the table into the FROM clause
      *
      */
     protected function initSqlDriver()
     {
-        $this->_sql = $this->_objItem->getSqlDriver()->select();
-        $table      = $this->_objItem->getDBTable();
+        $driverType = $this->getDb()->getAttribute(\PDO::ATTR_DRIVER_NAME);
 
-        $this->_sql->from( $table->getFQN('obj') );
+        $driver = null;
+
+        switch ( $driverType )
+        {
+            case self::POSTGRESQL:
+                $this->_sql = new DBSql\PostgreSQL\Select;
+                break;
+
+            case self::MYSQL:
+                $this->_sql = new DBSql\MySQL\Select;
+                break;
+        }
     }
 
     /* -- Support for SPL interfaces from this point down -- */

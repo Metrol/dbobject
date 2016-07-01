@@ -92,10 +92,9 @@ class PostgreSQLObjectTest extends \PHPUnit_Framework_TestCase
         $dboUpdate = (new objtest1($this->db))->load($newID);
 
         $this->assertEquals('Hello there', $dboUpdate->sometext);
-
     }
 
-    public function testSets()
+    public function testItemSets()
     {
         // Clear out any previous data in the test table
         $this->db->query('TRUNCATE public.objtest1');
@@ -166,5 +165,25 @@ class PostgreSQLObjectTest extends \PHPUnit_Framework_TestCase
         $topItem = $set->rewind()->current();
 
         $this->assertEquals('Bravo', $topItem->sometext);
+    }
+
+    /**
+     * Test a generic set of data
+     *
+     * @depends testItemSets
+     */
+    public function testGenericSets()
+    {
+        $set = new DBObject\Set($this->db);
+
+        $sql = $set->getSqlSelect();
+        $sql->from('objtest1')
+            ->fields(['sometext', 'anum'])
+            ->order('sometext');
+        $set->run();
+
+        $this->assertCount(9, $set);
+        $topItem = $set->rewind()->current();
+        $this->assertEquals('Alpha', $topItem->sometext);
     }
 }
