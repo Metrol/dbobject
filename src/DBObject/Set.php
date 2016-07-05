@@ -60,13 +60,15 @@ class Set implements \Iterator, \Countable
     }
 
     /**
+     * Check for a field name existing in the data set
+     *
      * @param string $key
      *
      * @return bool
      */
     public function __isset($key)
     {
-        return isset($this->_objDataSet[ $key]);
+        return isset($this->_objDataSet[$key]);
     }
 
     /**
