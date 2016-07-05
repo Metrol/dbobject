@@ -189,8 +189,13 @@ class Item implements DBObject
     /**
      * @inheritdoc
      */
-    public function loadFromWhere($where, array $binding = null)
+    public function loadFromWhere($where, $binding = null)
     {
+        if ( $binding !== null and !is_array($binding) )
+        {
+            $binding = [$binding];
+        }
+
         $db = $this->_objDb;
 
         $tableName  = $this->_objTable->getName();

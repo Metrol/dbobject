@@ -81,11 +81,11 @@ interface DBObject
      * place holder.
      *
      * @param string $where
-     * @param array  $bindings
+     * @param mixed|array  $bindings
      *
      * @return $this
      */
-    public function loadFromWhere($where, array $bindings = null);
+    public function loadFromWhere($where, $bindings = null);
 
     /**
      * Will update a record if a primary key value has been set and the object
