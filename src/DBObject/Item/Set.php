@@ -275,7 +275,7 @@ class Set implements \Iterator, \Countable
         $this->_sql = $this->_objItem->getSqlDriver()->select();
         $table      = $this->_objItem->getDBTable();
 
-        $this->_sql->from( $table->getFQN('obj') );
+        $this->_sql->from( $table->getFQN() );
     }
 
     /* -- Support for SPL interfaces from this point down -- */
