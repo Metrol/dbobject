@@ -151,6 +151,16 @@ class Set implements \Iterator, \Countable
     }
 
     /**
+     * Provide the entire result set
+     *
+     * @return array
+     */
+    public function getDataSet()
+    {
+        return $this->_objDataSet;
+    }
+
+    /**
      * Add a filter with bound values
      *
      * @param string $whereClause
