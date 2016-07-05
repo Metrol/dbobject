@@ -131,6 +131,26 @@ class Set implements \Iterator, \Countable
     }
 
     /**
+     * Fetch a list of values for a specific field from the dataset as a simple
+     * array.
+     *
+     * @param string $fieldName
+     *
+     * @return array
+     */
+    public function getFieldValues($fieldName)
+    {
+        $rtn = [];
+
+        foreach ( $this->_objDataSet as $item )
+        {
+            $rtn[] = $item->get($fieldName);
+        }
+
+        return $rtn;
+    }
+
+    /**
      * Add a filter with bound values
      *
      * @param string $whereClause
