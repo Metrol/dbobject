@@ -134,11 +134,11 @@ class Set implements \Iterator, \Countable
      * Add a filter with bound values
      *
      * @param string $whereClause
-     * @param array  $bindings
+     * @param mixed|array  $bindings
      *
      * @return $this
      */
-    public function addFilter($whereClause, array $bindings = null)
+    public function addFilter($whereClause, $bindings = null)
     {
         $this->getSqlSelect()->where($whereClause, $bindings);
 
