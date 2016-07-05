@@ -158,7 +158,7 @@ class Item implements DBObject
 
         $sql = $this->getSqlDriver()->select()
                     ->from( $tableName )
-                    ->where( $primaryKey . ' = ?', [$id]);
+                    ->where( $primaryKey . ' = ?', $id);
 
         $statement = $db->prepare($sql->output());
         $statement->execute($sql->getBindings());
@@ -344,17 +344,34 @@ class Item implements DBObject
      */
     protected function updateRecord()
     {
+        $primaryKeys = $this->getDBTable()->getPrimaryKeys();
+
         // Cannot update a record without a primary key
-        if ( empty($this->getDBTable()->getPrimaryKeys()) )
+        if ( empty($primaryKeys) )
         {
             return;
         }
 
         $update = $this->getSqlDriver()->update();
 
-        $update->table($this->getDBTable()->getFQN())
-            ->fieldValues($this->_objData)
-            ->where($this->getPrimaryKeyField().' = ?', [$this->getId()]);
+        $update->table($this->getDBTable()->getFQN());
+
+        foreach ( $this->_objData as $field => $value )
+        {
+            // Primary keys do not be updated here.  They're criteria for what
+            // will be updated.
+            if ( in_array($field, $primaryKeys) )
+            {
+                continue;
+            }
+
+            $update->fieldValue($field, '?', $value);
+        }
+
+        foreach ( $primaryKeys as $primaryKey )
+        {
+            $update->where($primaryKey . ' = ?', $this->get($primaryKey));
+        }
 
         $statement = $this->_objDb->prepare($update->output());
         $statement->execute($update->getBindings());
