@@ -306,9 +306,8 @@ class Item implements DBObject
      */
     protected function insertRecord()
     {
-        $rtn      = null;
-        $pkField  = null;
-        $fetchKey = false;
+        $fetchKey    = false;
+        $primaryKeys = $this->getDBTable()->getPrimaryKeys();
 
         $insert = $this->getSqlDriver()->insert();
 
@@ -317,14 +316,13 @@ class Item implements DBObject
 
         if ( $this->_objTable instanceof DBTable\PostgreSQL )
         {
-            /**
-             * @var DBSql\PostgreSQL\Insert $insert
-             */
-            if ( !empty($this->getDBTable()->getPrimaryKeys()) )
+            if ( !empty($primaryKeys) )
             {
-                $pkField = $this->getDBTable()->getPrimaryKeys()[0];
-                $insert->returning($pkField);
-                $fetchKey = true;
+                foreach ( $primaryKeys as $primaryKey )
+                {
+                    $insert->returning($primaryKey);
+                    $fetchKey = true;
+                }
             }
         }
 
@@ -334,7 +332,11 @@ class Item implements DBObject
         if ( $fetchKey )
         {
             $result = $statement->fetch(PDO::FETCH_ASSOC);
-            $this->setId($result[$pkField]);
+
+            foreach ( $primaryKeys as $primaryKey )
+            {
+                $this->set($primaryKey, $result[$primaryKey]);
+            }
         }
     }
 
