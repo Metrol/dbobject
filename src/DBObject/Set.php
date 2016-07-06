@@ -132,6 +132,114 @@ class Set implements \Iterator, \Countable
     }
 
     /**
+     * Fetch a list of values for a specific field from the dataset as a simple
+     * array.
+     *
+     * @param string $fieldName
+     *
+     * @return array
+     */
+    public function getFieldValues($fieldName)
+    {
+        $rtn = [];
+
+        foreach ( $this->_objDataSet as $item )
+        {
+            $rtn[] = $item->get($fieldName);
+        }
+
+        return $rtn;
+    }
+
+    /**
+     * Fetch a single item based on the index value of the data set
+     *
+     * @param integer $index
+     *
+     * @return stdClass|null
+     */
+    public function get($index)
+    {
+        $rtn = null;
+
+        if ( isset($this->_objDataSet[$index]) )
+        {
+            $rtn = $this->_objDataSet[$index];
+        }
+
+        return $rtn;
+    }
+
+    /**
+     * Fetching the first item off the top of the list
+     *
+     * @return stdClass
+     */
+    public function top()
+    {
+        $this->rewind();
+
+        return $this->current();
+    }
+
+    /**
+     * Find the first item with specified field matching the specified value
+     *
+     * @param string $fieldName
+     * @param mixed  $findValue
+     *
+     * @return stdClass|null
+     */
+    public function find($fieldName, $findValue)
+    {
+        $rtn = null;
+
+        foreach ( $this->_objDataSet as $item )
+        {
+            if ( $item->get($fieldName) == $findValue )
+            {
+                $rtn = $item;
+                break;
+            }
+        }
+
+        return $rtn;
+    }
+
+    /**
+     * Find all items with the specified field matching the specified value
+     *
+     * @param string $fieldName
+     * @param mixed  $findValue
+     *
+     * @return array
+     */
+    public function findAll($fieldName, $findValue)
+    {
+        $rtn = [];
+
+        foreach ( $this->_objDataSet as $item )
+        {
+            if ( $item->get($fieldName) == $findValue )
+            {
+                $rtn[] = $item;
+            }
+        }
+
+        return $rtn;
+    }
+
+    /**
+     * Provide the entire result set
+     *
+     * @return array
+     */
+    public function getDataSet()
+    {
+        return $this->_objDataSet;
+    }
+
+    /**
      * Provide the database connection used in this listing
      *
      * @return \PDO
