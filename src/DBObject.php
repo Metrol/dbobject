@@ -1,10 +1,11 @@
 <?php
 /**
- * @author        "Michael Collette" <metrol@metrol.net>
- * @package       Metrol_Libs
- * @version       2.0
+ * @author        Michael Collette <metrol@metrol.net>
+ * @package       Metrol/DBObject
+ * @version       1.0
  * @copyright (c) 2016, Michael Collette
  */
+
 
 namespace Metrol;
 

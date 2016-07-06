@@ -1,10 +1,11 @@
 <?php
 /**
- * @author        Michael Collette <mcollette@meetingevolution.net>
+ * @author        Michael Collette <metrol@metrol.net>
+ * @package       Metrol/DBObject
  * @version       1.0
- * @package       Metrol\DBObject
  * @copyright (c) 2016, Michael Collette
  */
+
 
 namespace Metrol\Tests;
 

@@ -1,6 +1,6 @@
 <?php
 /**
- * @author        "Michael Collette" <metrol@metrol.net>
+ * @author        Michael Collette <metrol@metrol.net>
  * @package       Metrol/DBObject
  * @version       1.0
  * @copyright (c) 2016, Michael Collette

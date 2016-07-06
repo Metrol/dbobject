@@ -1,9 +1,9 @@
 <?php
 /**
- * @author        Michael Collette <mcollette@meetingevolution.net>
- * @version       2.0
- * @package       Sourcing
- * @copyright (c) 2016, Sourcing
+ * @author        Michael Collette <metrol@metrol.net>
+ * @package       Metrol/DBObject
+ * @version       1.0
+ * @copyright (c) 2016, Michael Collette
  */
 
 namespace Metrol\DBObject\PostgreSQL;
@@ -68,6 +68,27 @@ class Data
      * @return mixed|null
      */
     public function get($field)
+    {
+        $rtn = null;
+
+        if ( isset($this->_objData[$field]) )
+        {
+            $rtn = $this->_objData[$field];
+        }
+
+        return $rtn;
+    }
+
+    /**
+     * Provide the value of a field in a format ready to be stored into the
+     * database.  This is meant for a bound value, so quoting support is not
+     * provided.
+     *
+     * @param string $field
+     *
+     * @return mixed|null
+     */
+    public function getForQuery($field)
     {
         $rtn = null;
 
