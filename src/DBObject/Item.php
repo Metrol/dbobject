@@ -20,8 +20,6 @@ use PDO;
  */
 class Item implements DBObject
 {
-    use DBObject\GetSetTrait;
-
     /**
      * The database table that this item will be acting as a front end for
      *
@@ -35,6 +33,13 @@ class Item implements DBObject
      * @var PDO
      */
     protected $_objDb;
+
+    /**
+     * The record data for this object in key/value pairs
+     *
+     * @var array
+     */
+    protected $_objData;
 
     /**
      * Tracks the load status for the item
@@ -54,7 +59,91 @@ class Item implements DBObject
     {
         $this->_objTable      = $table;
         $this->_objDb         = $databaseConnection;
+        $this->_objData       = array();
         $this->_objLoadStatus = self::NOT_LOADED;
+    }
+
+    /**
+     *
+     * @param string $field
+     *
+     * @return mixed|null
+     */
+    public function __get($field)
+    {
+        return $this->get($field);
+    }
+
+    /**
+     * @param string $field
+     * @param mixed $value
+     *
+     * @return $this
+     */
+    public function __set($field, $value)
+    {
+        return $this->set($field, $value);
+    }
+
+    /**
+     * @param string $field
+     *
+     * @return boolean
+     */
+    public function __isset($field)
+    {
+        $rtn = false;
+
+        if ( isset($this->_objData[$field]) )
+        {
+            $rtn = true;
+        }
+
+        return $rtn;
+    }
+
+    /**
+     *
+     * @param string $field
+     *
+     * @return mixed|null
+     */
+    public function get($field)
+    {
+        $rtn = null;
+
+        if ( !$this->_objTable->fieldExists($field) )
+        {
+            return null;
+        }
+
+        if ( isset($this->_objData[$field]) )
+        {
+            $rtn = $this->_objData[$field];
+        }
+
+        return $rtn;
+    }
+
+    /**
+     *
+     * @param string $field
+     * @param mixed  $value
+     *
+     * @return $this
+     */
+    public function set($field, $value)
+    {
+        if ( !$this->_objTable->fieldExists($field) )
+        {
+            return $this;
+        }
+
+        $fieldObj = $this->getDBTable()->getField($field);
+
+        $this->_objData[$field] = $fieldObj->getPHPValue($value);
+
+        return $this;
     }
 
     /**
@@ -313,11 +402,30 @@ class Item implements DBObject
     {
         $fetchKey    = false;
         $primaryKeys = $this->getDBTable()->getPrimaryKeys();
+        $fields      = $this->getDBTable()->getFields();
 
         $insert = $this->getSqlDriver()->insert();
+        $insert->table($this->getDBTable()->getFQN());
+        $insData = array();
 
-        $insert->table($this->getDBTable()->getFQN())
-            ->fieldValues($this->_objData);
+        foreach ( $fields as $field )
+        {
+            $fieldName = $field->getName();
+
+            if ( $this->__isset($fieldName) )
+            {
+                $value = $field->getSqlBoundValue($this->get($fieldName));
+                $insData[ $fieldName ] = $value;
+            }
+        }
+
+        // Nothing to insert?  Time to leave.
+        if ( empty($insData) )
+        {
+            return;
+        }
+
+        $insert->fieldValues($insData);
 
         if ( $this->_objTable instanceof DBTable\PostgreSQL )
         {
@@ -331,7 +439,7 @@ class Item implements DBObject
             }
         }
 
-        $statement = $this->_objDb->prepare($insert->output());
+        $statement = $this->getDb()->prepare($insert->output());
         $statement->execute($insert->getBindings());
 
         if ( $fetchKey )
@@ -363,21 +471,34 @@ class Item implements DBObject
 
         $update->table($this->getDBTable()->getFQN());
 
-        foreach ( $this->_objData as $field => $value )
+        foreach ( $this->_objData as $fieldName => $value )
         {
             // Primary keys do not be updated here.  They're criteria for what
             // will be updated.
-            if ( in_array($field, $primaryKeys) )
+            if ( in_array($fieldName, $primaryKeys) )
             {
                 continue;
             }
 
-            $update->fieldValue($field, '?', $value);
+            // The field must exist in the table
+            if ( !$this->getDBTable()->fieldExists($fieldName) )
+            {
+                continue;
+            }
+
+            $bindValue = $this->getDBTable()
+                ->getField($fieldName)
+                ->getSqlBoundValue($value);
+
+            $update->fieldValue($fieldName, '?', $bindValue);
         }
 
         foreach ( $primaryKeys as $primaryKey )
         {
-            $update->where($primaryKey . ' = ?', $this->get($primaryKey));
+            $bindValue = $this->getDBTable()->getField($primaryKey)
+                ->getSqlBoundValue( $this->get($primaryKey));
+
+            $update->where($primaryKey . ' = ?', $bindValue);
         }
 
         $statement = $this->_objDb->prepare($update->output());
