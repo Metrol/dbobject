@@ -18,7 +18,7 @@ use PDO;
  * and deleting the information.
  *
  */
-class Item implements DBObject
+class Item implements DBObject, \JsonSerializable
 {
     /**
      * The database table that this item will be acting as a front end for
@@ -100,6 +100,16 @@ class Item implements DBObject
         }
 
         return $rtn;
+    }
+
+    /**
+     * Provide the object data to support json_encode
+     *
+     * @return array
+     */
+    public function jsonSerialize()
+    {
+        return $this->_objData;
     }
 
     /**
