@@ -8,82 +8,26 @@
 
 namespace Metrol\DBObject;
 
-use Metrol\DBTable;
-use Metrol\DBSql;
-use PDO;
-
 /**
- * Maps itself to a database record for the purposes of creating, updating,
- * and deleting the information.
+ * Acts as a generic holding object that can be fed dynamic information
  *
  */
-class Item implements \JsonSerializable
+class Item implements \JsonSerializable, \Iterator
 {
     /**
-     * Flag set to specify that a load() has been attempted, and was successful
-     * in pulling back a record to populate this object.
-     *
-     * @const integer
-     */
-    const LOADED = 1;
-
-    /**
-     * Flag set to specify that a load() has not been attempted.  The object
-     * should be in it's initial state
-     *
-     * @const integer
-     */
-    const NOT_LOADED = 0;
-
-    /**
-     * Flag set to specific a load() was attempted, but a matching record could
-     * not be found.
-     *
-     * @const integer
-     */
-    const NOT_FOUND = 86;
-
-    /**
-     * The database table that this item will be acting as a front end for
-     *
-     * @var DBTable
-     */
-    protected $_objTable;
-
-    /**
-     * The database connection used to talk to this object
-     *
-     * @var PDO
-     */
-    protected $_objDb;
-
-    /**
-     * The record data for this object in key/value pairs
+     * The data for this object in key/value pairs
      *
      * @var array
      */
     protected $_objData;
 
     /**
-     * Tracks the load status for the item
-     *
-     * @var integer
-     */
-    protected $_objLoadStatus;
-
-    /**
      * Instantiate the object
      *
-     * @param DBTable $table
-     * @param PDO     $databaseConnection
-     *
      */
-    public function __construct(DBTable $table, PDO $databaseConnection)
+    public function __construct()
     {
-        $this->_objTable      = $table;
-        $this->_objDb         = $databaseConnection;
-        $this->_objData       = array();
-        $this->_objLoadStatus = self::NOT_LOADED;
+        $this->_objData = array();
     }
 
     /**
@@ -145,11 +89,6 @@ class Item implements \JsonSerializable
     {
         $rtn = null;
 
-        if ( !$this->_objTable->fieldExists($field) )
-        {
-            return null;
-        }
-
         if ( isset($this->_objData[$field]) )
         {
             $rtn = $this->_objData[$field];
@@ -167,372 +106,99 @@ class Item implements \JsonSerializable
      */
     public function set($field, $value)
     {
-        if ( !$this->_objTable->fieldExists($field) )
-        {
-            return $this;
-        }
-
-        $fieldObj = $this->getDBTable()->getField($field);
-
-        $this->_objData[$field] = $fieldObj->getPHPValue($value);
+        $this->_objData[$field] = $value;
 
         return $this;
     }
 
     /**
-     * Provides the primary key field for this object
+     * Provide a list of fields that have been set in this object
      *
-     * @return string|null
+     * @return string[]
      */
-    public function getPrimaryKeyField()
+    public function keys()
     {
-        $rtn = null;
-
-        $keys = $this->_objTable->getPrimaryKeys();
-
-        if ( count($keys) > 0 )
-        {
-            $rtn = $keys[0];
-        }
-
-        return $rtn;
+        return array_keys($this->_objData);
     }
 
     /**
-     * Set the primary key value for this object
+     * Provide the entire contents of the data array being stored here
      *
-     * @param mixed $value
+     * @return array
+     */
+    public function getData()
+    {
+        return $this->_objData;
+    }
+
+    /**
+     * Resets the data in this object.
      *
      * @return $this
      */
-    public function setId($value)
+    public function clear()
     {
-        $pkField = $this->getPrimaryKeyField();
-
-        if ( $pkField !== null )
-        {
-            $this->set($pkField, $value);
-        }
+        $this->_objData = array();
 
         return $this;
     }
 
+    /* -- Support for SPL interfaces from this point down -- */
+
     /**
-     * Provide the primary key value
+     * How many fields have been set
      *
-     * @return mixed|null
+     * @return int
      */
-    public function getId()
+    public function count()
     {
-        $rtn = null;
-
-        $pkField = $this->getPrimaryKeyField();
-
-        if ( $pkField !== null )
-        {
-            $rtn = $this->get($pkField);
-        }
-
-        return $rtn;
+        return count($this->_objData);
     }
 
     /**
-     * @inheritdoc
-     */
-    public function save()
-    {
-        if ( $this->getLoadStatus() == self::NOT_LOADED )
-        {
-            $this->insertRecord();
-        }
-
-        if ( $this->getLoadStatus() == self::LOADED )
-        {
-            $this->updateRecord();
-        }
-
-        return $this;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function load($primaryKeyValue = null)
-    {
-        $db = $this->_objDb;
-
-        $tableName  = $this->_objTable->getName();
-        $primaryKey = $this->_objTable->getPrimaryKeys()[0];
-
-        if ( $primaryKeyValue == null )
-        {
-            $id = $this->getId();
-        }
-        else
-        {
-            $id = $primaryKeyValue;
-        }
-
-        if ( $id == null )
-        {
-            throw new \UnderflowException('No primary key value specified. Unable to load');
-        }
-
-        $sql = $this->getSqlDriver()->select()
-                    ->from( $tableName )
-                    ->where( $primaryKey . ' = ?', $id);
-
-        $statement = $db->prepare($sql->output());
-        $statement->execute($sql->getBindings());
-
-        if ( $statement->rowCount() == 0 )
-        {
-            $this->_objData = [];
-            $this->_objLoadStatus = self::NOT_FOUND;
-
-            return $this;
-        }
-
-        $result = $statement->fetch(PDO::FETCH_ASSOC);
-
-        foreach ( $result as $field => $value )
-        {
-            $this->set($field, $value);
-        }
-
-        $this->setId( $this->get($this->getPrimaryKeyField()) );
-
-        $this->_objLoadStatus = self::LOADED;
-
-        return $this;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function loadFromWhere($where, $binding = null)
-    {
-        if ( $binding !== null and !is_array($binding) )
-        {
-            $binding = [$binding];
-        }
-
-        $db = $this->_objDb;
-
-        $tableName  = $this->_objTable->getName();
-
-        $sql = $this->getSqlDriver()
-            ->select()
-            ->from( $tableName );
-
-        if ( !empty($binding) )
-        {
-            $sql->where($where, $binding);
-        }
-        else
-        {
-            $sql->where($where);
-        }
-
-        $sql->limit(1);
-
-        $statement = $db->prepare($sql->output());
-        $statement->execute($sql->getBindings());
-
-        if ( $statement->rowCount() == 0 )
-        {
-            $this->_objData = [];
-            $this->_objLoadStatus = self::NOT_FOUND;
-
-            return $this;
-        }
-
-        $result = $statement->fetch(PDO::FETCH_ASSOC);
-
-        foreach ( $result as $field => $value )
-        {
-            $this->set($field, $value);
-        }
-
-        $this->setId( $this->get($this->getPrimaryKeyField()) );
-
-        $this->_objLoadStatus = self::LOADED;
-
-        return $this;
-    }
-
-    /**
-     * Provide the load status of the object based on the constants of the
-     * interface.
-     *
-     * @return integer
-     */
-    public function getLoadStatus()
-    {
-        return $this->_objLoadStatus;
-    }
-
-    /**
-     * Delete the loaded record from the database.
-     * Does nothing if no record is loaded.
      *
      * @return $this
      */
-    public function delete()
+    public function rewind()
     {
-        if ( $this->getLoadStatus() !== self::LOADED )
-        {
-            return $this;
-        }
+        reset($this->_objData);
 
         return $this;
     }
 
     /**
-     * Provide the database connection used for this item
      *
-     * @return PDO
+     * @return mixed
      */
-    public function getDb()
+    public function current()
     {
-        return $this->_objDb;
+        return current($this->_objData);
     }
 
     /**
-     * Provide the database table to be used for this DB Item
      *
-     * @return DBTable
+     * @return string
      */
-    public function getDBTable()
+    public function key()
     {
-        return $this->_objTable;
+        return key($this->_objData);
     }
 
     /**
-     * Provide the SQL Driver based on the type of DBTable provided
      *
-     * @return DBSql\DriverInterface
-     *
-     * @throws \UnexpectedValueException  When no engine is found
+     * @return mixed
      */
-    public function getSqlDriver()
+    public function next()
     {
-        if ( $this->_objTable instanceof DBTable\PostgreSQL )
-        {
-            return DBSql::PostgreSQL();
-        }
-
-        throw new \UnexpectedValueException('Unsupported SQL Engine Requested');
+        return next($this->_objData);
     }
 
     /**
-     * Insert a new record from the data in this object
      *
+     * @return bool
      */
-    protected function insertRecord()
+    public function valid()
     {
-        $fetchKey    = false;
-        $primaryKeys = $this->getDBTable()->getPrimaryKeys();
-        $fields      = $this->getDBTable()->getFields();
-
-        $insert = $this->getSqlDriver()->insert();
-        $insert->table($this->getDBTable()->getFQN());
-        $insData = array();
-
-        foreach ( $fields as $field )
-        {
-            $fieldName = $field->getName();
-
-            if ( $this->__isset($fieldName) )
-            {
-                $value = $field->getSqlBoundValue($this->get($fieldName));
-                $insData[ $fieldName ] = $value;
-            }
-        }
-
-        // Nothing to insert?  Time to leave.
-        if ( empty($insData) )
-        {
-            return;
-        }
-
-        $insert->fieldValues($insData);
-
-        if ( $this->_objTable instanceof DBTable\PostgreSQL )
-        {
-            if ( !empty($primaryKeys) )
-            {
-                foreach ( $primaryKeys as $primaryKey )
-                {
-                    $insert->returning($primaryKey);
-                    $fetchKey = true;
-                }
-            }
-        }
-
-        $statement = $this->getDb()->prepare($insert->output());
-        $statement->execute($insert->getBindings());
-
-        if ( $fetchKey )
-        {
-            $result = $statement->fetch(PDO::FETCH_ASSOC);
-
-            foreach ( $primaryKeys as $primaryKey )
-            {
-                $this->set($primaryKey, $result[$primaryKey]);
-            }
-        }
-    }
-
-    /**
-     * Update an existing record
-     *
-     */
-    protected function updateRecord()
-    {
-        $primaryKeys = $this->getDBTable()->getPrimaryKeys();
-
-        // Cannot update a record without a primary key
-        if ( empty($primaryKeys) )
-        {
-            return;
-        }
-
-        $update = $this->getSqlDriver()->update();
-
-        $update->table($this->getDBTable()->getFQN());
-
-        foreach ( $this->_objData as $fieldName => $value )
-        {
-            // Primary keys do not be updated here.  They're criteria for what
-            // will be updated.
-            if ( in_array($fieldName, $primaryKeys) )
-            {
-                continue;
-            }
-
-            // The field must exist in the table
-            if ( !$this->getDBTable()->fieldExists($fieldName) )
-            {
-                continue;
-            }
-
-            $bindValue = $this->getDBTable()
-                ->getField($fieldName)
-                ->getSqlBoundValue($value);
-
-            $update->fieldValue($fieldName, '?', $bindValue);
-        }
-
-        foreach ( $primaryKeys as $primaryKey )
-        {
-            $bindValue = $this->getDBTable()->getField($primaryKey)
-                ->getSqlBoundValue( $this->get($primaryKey));
-
-            $update->where($primaryKey . ' = ?', $bindValue);
-        }
-
-        $statement = $this->_objDb->prepare($update->output());
-        $statement->execute($update->getBindings());
+        return key($this->_objData) !== null;
     }
 }

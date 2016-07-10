@@ -10,6 +10,7 @@ namespace Metrol;
 
 use Metrol\DBTable;
 use Metrol\DBSql;
+use Metrol\DBObject\Item;
 use PDO;
 
 /**
@@ -17,7 +18,7 @@ use PDO;
  * and deleting the information.
  *
  */
-class DBObject implements \JsonSerializable
+class DBObject extends Item
 {
     /**
      * Flag set to specify that a load() has been attempted, and was successful
@@ -58,13 +59,6 @@ class DBObject implements \JsonSerializable
     protected $_objDb;
 
     /**
-     * The record data for this object in key/value pairs
-     *
-     * @var array
-     */
-    protected $_objData;
-
-    /**
      * Tracks the load status for the item
      *
      * @var integer
@@ -80,32 +74,11 @@ class DBObject implements \JsonSerializable
      */
     public function __construct(DBTable $table, PDO $databaseConnection)
     {
+        parent::__construct();
+
         $this->_objTable      = $table;
         $this->_objDb         = $databaseConnection;
-        $this->_objData       = array();
         $this->_objLoadStatus = self::NOT_LOADED;
-    }
-
-    /**
-     *
-     * @param string $field
-     *
-     * @return mixed|null
-     */
-    public function __get($field)
-    {
-        return $this->get($field);
-    }
-
-    /**
-     * @param string $field
-     * @param mixed $value
-     *
-     * @return $this
-     */
-    public function __set($field, $value)
-    {
-        return $this->set($field, $value);
     }
 
     /**
@@ -117,22 +90,12 @@ class DBObject implements \JsonSerializable
     {
         $rtn = false;
 
-        if ( isset($this->_objData[$field]) )
+        if ( $this->getDBTable()->fieldExists($field) )
         {
             $rtn = true;
         }
 
         return $rtn;
-    }
-
-    /**
-     * Provide the object data to support json_encode
-     *
-     * @return array
-     */
-    public function jsonSerialize()
-    {
-        return $this->_objData;
     }
 
     /**
@@ -145,14 +108,9 @@ class DBObject implements \JsonSerializable
     {
         $rtn = null;
 
-        if ( !$this->_objTable->fieldExists($field) )
+        if ( $this->getDBTable()->fieldExists($field) )
         {
-            return null;
-        }
-
-        if ( isset($this->_objData[$field]) )
-        {
-            $rtn = $this->_objData[$field];
+            $rtn = parent::get($field);
         }
 
         return $rtn;
@@ -167,14 +125,13 @@ class DBObject implements \JsonSerializable
      */
     public function set($field, $value)
     {
-        if ( !$this->_objTable->fieldExists($field) )
+        if ( !$this->getDBTable()->fieldExists($field) )
         {
             return $this;
         }
 
-        $fieldObj = $this->getDBTable()->getField($field);
-
-        $this->_objData[$field] = $fieldObj->getPHPValue($value);
+        parent::set($field, $this->getDBTable()->getField($field)
+                                 ->getPHPValue($value));
 
         return $this;
     }
@@ -188,7 +145,7 @@ class DBObject implements \JsonSerializable
     {
         $rtn = null;
 
-        $keys = $this->_objTable->getPrimaryKeys();
+        $keys = $this->getDBTable()->getPrimaryKeys();
 
         if ( count($keys) > 0 )
         {
@@ -259,10 +216,7 @@ class DBObject implements \JsonSerializable
      */
     public function load($primaryKeyValue = null)
     {
-        $db = $this->_objDb;
-
-        $tableName  = $this->_objTable->getName();
-        $primaryKey = $this->_objTable->getPrimaryKeys()[0];
+        $primaryKey = $this->getDBTable()->getPrimaryKeys()[0];
 
         if ( $primaryKeyValue == null )
         {
@@ -279,15 +233,15 @@ class DBObject implements \JsonSerializable
         }
 
         $sql = $this->getSqlDriver()->select()
-                    ->from( $tableName )
+                    ->from( $this->getDBTable()->getName() )
                     ->where( $primaryKey . ' = ?', $id);
 
-        $statement = $db->prepare($sql->output());
+        $statement = $this->getDb()->prepare($sql->output());
         $statement->execute($sql->getBindings());
 
         if ( $statement->rowCount() == 0 )
         {
-            $this->_objData = [];
+            $this->clear();
             $this->_objLoadStatus = self::NOT_FOUND;
 
             return $this;
@@ -317,13 +271,9 @@ class DBObject implements \JsonSerializable
             $binding = [$binding];
         }
 
-        $db = $this->_objDb;
-
-        $tableName  = $this->_objTable->getName();
-
         $sql = $this->getSqlDriver()
             ->select()
-            ->from( $tableName );
+            ->from( $this->getDBTable()->getName() );
 
         if ( !empty($binding) )
         {
@@ -336,12 +286,12 @@ class DBObject implements \JsonSerializable
 
         $sql->limit(1);
 
-        $statement = $db->prepare($sql->output());
+        $statement = $this->getDb()->prepare($sql->output());
         $statement->execute($sql->getBindings());
 
         if ( $statement->rowCount() == 0 )
         {
-            $this->_objData = [];
+            $this->clear();
             $this->_objLoadStatus = self::NOT_FOUND;
 
             return $this;
@@ -458,7 +408,9 @@ class DBObject implements \JsonSerializable
 
         $insert->fieldValues($insData);
 
-        if ( $this->_objTable instanceof DBTable\PostgreSQL )
+        // PostgreSQL needs to have a RETURNING statement added with the
+        // primary keys for the table assigned to it.
+        if ( $this->getDBTable() instanceof DBTable\PostgreSQL )
         {
             if ( !empty($primaryKeys) )
             {
@@ -502,9 +454,9 @@ class DBObject implements \JsonSerializable
 
         $update->table($this->getDBTable()->getFQN());
 
-        foreach ( $this->_objData as $fieldName => $value )
+        foreach ( $this as $fieldName => $value )
         {
-            // Primary keys do not be updated here.  They're criteria for what
+            // Primary keys do not get updated here.  They're criteria for what
             // will be updated.
             if ( in_array($fieldName, $primaryKeys) )
             {
@@ -532,7 +484,7 @@ class DBObject implements \JsonSerializable
             $update->where($primaryKey . ' = ?', $bindValue);
         }
 
-        $statement = $this->_objDb->prepare($update->output());
+        $statement = $this->getDb()->prepare($update->output());
         $statement->execute($update->getBindings());
     }
 }
