@@ -8,7 +8,6 @@
 
 namespace Metrol\DBObject;
 
-use Metrol\DBObject;
 use Metrol\DBTable;
 use Metrol\DBSql;
 use PDO;
@@ -18,8 +17,32 @@ use PDO;
  * and deleting the information.
  *
  */
-class Item implements DBObject, \JsonSerializable
+class Item implements \JsonSerializable
 {
+    /**
+     * Flag set to specify that a load() has been attempted, and was successful
+     * in pulling back a record to populate this object.
+     *
+     * @const integer
+     */
+    const LOADED = 1;
+
+    /**
+     * Flag set to specify that a load() has not been attempted.  The object
+     * should be in it's initial state
+     *
+     * @const integer
+     */
+    const NOT_LOADED = 0;
+
+    /**
+     * Flag set to specific a load() was attempted, but a matching record could
+     * not be found.
+     *
+     * @const integer
+     */
+    const NOT_FOUND = 86;
+
     /**
      * The database table that this item will be acting as a front end for
      *
@@ -265,7 +288,6 @@ class Item implements DBObject, \JsonSerializable
         if ( $statement->rowCount() == 0 )
         {
             $this->_objData = [];
-            $this->_objPrimaryKeyValue = null;
             $this->_objLoadStatus = self::NOT_FOUND;
 
             return $this;
@@ -320,7 +342,6 @@ class Item implements DBObject, \JsonSerializable
         if ( $statement->rowCount() == 0 )
         {
             $this->_objData = [];
-            $this->_objPrimaryKeyValue = null;
             $this->_objLoadStatus = self::NOT_FOUND;
 
             return $this;
