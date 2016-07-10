@@ -19,7 +19,7 @@ use Metrol\DBTable;
  * @property string  $sometext
  * @property integer $anum
  */
-class objtest1 extends DBObject\Item
+class objtest1 extends DBObject
 {
     const TBL_NAME = 'objtest1';
 
