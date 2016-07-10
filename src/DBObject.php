@@ -418,6 +418,17 @@ class DBObject extends Item
         {
             $fieldName = $field->getName();
 
+            // Do not include a primary key field that doesn't have a value
+            // assigned.  At this point, going to assume an auto incrementing
+            // field.
+            if ( in_array($fieldName, $primaryKeys) )
+            {
+                if ( empty($this->get($fieldName)) )
+                {
+                    continue;
+                }
+            }
+
             if ( $this->__isset($fieldName) )
             {
                 $value = $field->getSqlBoundValue($this->get($fieldName));
