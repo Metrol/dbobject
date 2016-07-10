@@ -6,37 +6,31 @@
  * @copyright (c) 2016, Michael Collette
  */
 
-
 namespace Metrol\DBObject;
 
 use Metrol\DBObject;
 use Metrol\DBSql;
 use PDO;
-use stdClass;
 
 /**
- * Handles generating and storing a set of database records as object
+ * Handles generating and storing a set of DBObjects
  *
  */
 class Set implements \Iterator, \Countable
 {
-    const POSTGRESQL     = 'pgsql';
-    const MYSQL          = 'mysql';
-    const SQLITE         = 'sqlite';
-
     /**
      * The record data for this object in key/value pairs
      *
-     * @var stdClass[]
+     * @var DBObject[]
      */
     protected $_objDataSet;
 
     /**
-     * The database connection to be used for the queries to be run
+     * The object type that will be making up this set.
      *
-     * @var PDO
+     * @var DBObject
      */
-    protected $_db;
+    protected $_objItem;
 
     /**
      * SQL SELECT Driver used to build the query that populates this set
@@ -46,24 +40,20 @@ class Set implements \Iterator, \Countable
     protected $_sql;
 
     /**
-     * Instantiate the object set.
-     * Stores the database connection locally.
-     * Initializes the SQL driver to be used.
+     * Instantiate the object and store the sample DB Item as a reference
      *
-     * @param PDO $db
+     * @param DBObject $item
      */
-    public function __construct(PDO $db)
+    public function __construct(DBObject $item)
     {
-        $this->_db         = $db;
+        $this->_objItem    = $item;
         $this->_objDataSet = array();
 
         $this->initSqlDriver();
     }
 
     /**
-     * Check for a field name existing in the data set
-     *
-     * @param string $key
+     * @param integer $key
      *
      * @return bool
      */
@@ -79,16 +69,16 @@ class Set implements \Iterator, \Countable
      */
     public function run()
     {
-        $statement = $this->getDb()->prepare($this->_sql->output());
+        $statement = $this->_objItem->getDb()->prepare($this->_sql->output());
         $statement->execute($this->_sql->getBindings());
 
-        while ( $row = $statement->fetch(\PDO::FETCH_ASSOC) )
+        while ( $row = $statement->fetch(PDO::FETCH_ASSOC) )
         {
-            $item = new stdClass;
+            $item = clone $this->_objItem;
 
             foreach ( $row as $field => $value )
             {
-                $item->$field = $value;
+                $item->set($field, $value);
             }
 
             $this->_objDataSet[] = $item;
@@ -104,32 +94,41 @@ class Set implements \Iterator, \Countable
      */
     public function runForCount()
     {
-        $statement = $this->getDb()->prepare($this->_sql->output());
+        $statement = $this->_objItem->getDb()->prepare($this->_sql->output());
         $statement->execute($this->_sql->getBindings());
 
         return $statement->rowCount();
     }
 
     /**
-     * Provide the SQL SELECT statement in work
+     * Run the assembled query, but return only the information from the
+     * specified field in an array.
      *
-     * @return DBSql\SelectInterface
-     */
-    public function getSqlSelect()
-    {
-        return $this->_sql;
-    }
-
-    /**
-     * Removes all the objects from the set.  Does not remove them from the DB
+     * The data set stored in this object is not populated or affected in any
+     * way by running this.
      *
-     * @return $this
+     * @param string $fieldName
+     *
+     * @return array
      */
-    public function clearSet()
+    public function runForField($fieldName)
     {
-        $this->_objDataSet = [];
+        $this->getSqlSelect()->fields([$fieldName]);
 
-        return $this;
+        $statement = $this->_objItem->getDb()->prepare($this->_sql->output());
+        $statement->execute($this->_sql->getBindings());
+
+        $rtn = [];
+
+        while ( $row = $statement->fetch(PDO::FETCH_ASSOC) )
+        {
+            $rtn[] = $row[$fieldName];
+        }
+
+        // Put the fields to come out back to the default
+        $this->getSqlSelect()->fields(['*']);
+
+        return $rtn;
     }
 
     /**
@@ -157,7 +156,7 @@ class Set implements \Iterator, \Countable
      *
      * @param integer $index
      *
-     * @return stdClass|null
+     * @return DBObject|null
      */
     public function get($index)
     {
@@ -174,7 +173,7 @@ class Set implements \Iterator, \Countable
     /**
      * Fetching the first item off the top of the list
      *
-     * @return stdClass
+     * @return DBObject
      */
     public function top()
     {
@@ -189,7 +188,7 @@ class Set implements \Iterator, \Countable
      * @param string $fieldName
      * @param mixed  $findValue
      *
-     * @return stdClass|null
+     * @return DBObject|null
      */
     public function find($fieldName, $findValue)
     {
@@ -241,13 +240,109 @@ class Set implements \Iterator, \Countable
     }
 
     /**
-     * Provide the database connection used in this listing
+     * Add a filter with bound values
      *
-     * @return \PDO
+     * @param string $whereClause
+     * @param mixed|array  $bindings
+     *
+     * @return $this
      */
-    public function getDb()
+    public function addFilter($whereClause, $bindings = null)
     {
-        return $this->_db;
+        $this->getSqlSelect()->where($whereClause, $bindings);
+
+        return $this;
+    }
+
+    /**
+     * Adds a filter where a field must have a value in one of the items in
+     * an array.
+     *
+     * @param string $fieldName Which field to filter on
+     * @param array  $values    Values to match
+     *
+     * @return $this
+     */
+    public function addValueInFilter($fieldName, array $values)
+    {
+        $this->getSqlSelect()->whereIn($fieldName, $values);
+
+        return $this;
+    }
+
+    /**
+     * Add a sort field to the ordering of this set
+     *
+     * @param string $fieldName
+     * @param string $direction
+     *
+     * @return $this
+     */
+    public function addOrder($fieldName, $direction = null)
+    {
+        $this->getSqlSelect()->order($fieldName, $direction);
+
+        return $this;
+    }
+
+    /**
+     * Filters the list based on the primary key value of the DBObject passed
+     * in.
+     *
+     * @param DBObject $dbo
+     * @param string   $keyField This is field in the table being queried
+     *
+     * @return $this
+     */
+    public function addDBObjectFilter(DBObject $dbo, $keyField = null)
+    {
+        $field = $keyField;
+
+        if ( $field == null )
+        {
+            $field = $dbo->getDBTable()->getPrimaryKeys()[0];
+        }
+
+        $this->getSqlSelect()->where( $field.' = ?', $dbo->getId() );
+
+        return $this;
+    }
+
+    /**
+     * Provide the SQL SELECT statement in work
+     *
+     * @return DBSql\SelectInterface
+     */
+    public function getSqlSelect()
+    {
+        return $this->_sql;
+    }
+
+    /**
+     * Adds an item to the set
+     *
+     * @param DBObject $dbo
+     *
+     * @return $this
+     */
+    public function add(DBObject $dbo)
+    {
+        if ( $dbo instanceof $this->_objItem )
+        {
+            $this->_objDataSet[] = $dbo;
+        }
+    }
+
+    /**
+     * Removes all the objects from the set.  Does not remove them from the DB
+     *
+     * @return $this
+     */
+    public function clearSet()
+    {
+        $this->_objDataSet = [];
+
+        return $this;
     }
 
     /**
@@ -256,20 +351,10 @@ class Set implements \Iterator, \Countable
      */
     protected function initSqlDriver()
     {
-        $driverType = $this->getDb()->getAttribute(\PDO::ATTR_DRIVER_NAME);
+        $this->_sql = $this->_objItem->getSqlDriver()->select();
+        $table      = $this->_objItem->getDBTable();
 
-        $driver = null;
-
-        switch ( $driverType )
-        {
-            case self::POSTGRESQL:
-                $this->_sql = new DBSql\PostgreSQL\Select;
-                break;
-
-            case self::MYSQL:
-                $this->_sql = new DBSql\MySQL\Select;
-                break;
-        }
+        $this->_sql->from( $table->getFQN() );
     }
 
     /* -- Support for SPL interfaces from this point down -- */
