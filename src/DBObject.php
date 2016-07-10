@@ -330,10 +330,35 @@ class DBObject extends Item
      */
     public function delete()
     {
+        $primaryKeys = $this->getDBTable()->getPrimaryKeys();
+
+        // Cannot delete a record without a primary key
+        if ( empty($primaryKeys) )
+        {
+            return $this;
+        }
+
+        // This record must be loaded before it can be deleted so that primary
+        // key values are available
         if ( $this->getLoadStatus() !== self::LOADED )
         {
             return $this;
         }
+
+        $delete = $this->getSqlDriver()->delete();
+        $delete->table( $this->getDBTable()->getName() );
+
+        foreach ( $primaryKeys as $primaryKey )
+        {
+            $pkVal = $this->getDBTable()
+                ->getField($primaryKey)
+                ->getSqlBoundValue($this->get($primaryKey));
+
+            $delete->where($primaryKey.' = ?', $pkVal );
+        }
+
+        $statement = $this->getDb()->prepare($delete->output());
+        $statement->execute($delete->getBindings());
 
         return $this;
     }
