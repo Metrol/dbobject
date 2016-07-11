@@ -54,6 +54,18 @@ class Set extends DBObject\Item\Set
     }
 
     /**
+     * Generates a new DBObject that can be stored in this set.
+     * This is also used by the run() method to know which kind of object to
+     * populate.
+     *
+     * @return DBObject
+     */
+    public function getNewItem()
+    {
+        return clone $this->_objItem;
+    }
+
+    /**
      * Add a filter with bound values
      *
      * @param string $whereClause
