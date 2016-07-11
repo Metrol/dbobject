@@ -147,10 +147,16 @@ class Set extends DBObject\Item\Set
     /**
      * Do not allow RAW sql to be used here
      *
+     * @param string $sql
+     *
+     * @return $this
+     *
      * @throws \Exception
      */
-    public function setRawSQL()
+    public function setRawSQL($sql)
     {
         throw new \Exception('Raw SQL not supported for DBObject Set');
+
+        return $this;
     }
 }
