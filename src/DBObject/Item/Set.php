@@ -16,7 +16,7 @@ use PDO;
  * Handles generating and storing a set of database records as object
  *
  */
-class Set implements \Iterator, \Countable
+class Set implements \Iterator, \Countable, \JsonSerializable
 {
     /**
      * PDO DB engine values
@@ -127,6 +127,16 @@ class Set implements \Iterator, \Countable
     public function __isset($key)
     {
         return isset($this->_objDataSet[$key]);
+    }
+
+    /**
+     * Provide the object data to support json_encode
+     *
+     * @return array
+     */
+    public function jsonSerialize()
+    {
+        return $this->_objDataSet;
     }
 
     /**
