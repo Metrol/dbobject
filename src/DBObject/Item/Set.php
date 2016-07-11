@@ -11,6 +11,7 @@ namespace Metrol\DBObject\Item;
 use Metrol\DBObject\Item;
 use Metrol\DBSql;
 use PDO;
+use PDOStatement;
 
 /**
  * Handles generating and storing a set of database records as object
@@ -156,31 +157,7 @@ class Set implements \Iterator, \Countable, \JsonSerializable
      */
     public function run()
     {
-        switch ( $this->_sqlToUse )
-        {
-            case self::SQL_USE_SELECT:
-                $sth = $this->getDb()->prepare($this->_sqlSelect->output());
-                $sth->execute($this->_sqlSelect->getBindings());
-                break;
-
-            case self::SQL_USE_WITH:
-                $sth = $this->getDb()->prepare($this->_sqlWith->output());
-                $sth->execute($this->_sqlWith->getBindings());
-                break;
-
-            case self::SQL_USE_UNION:
-                $sth = $this->getDb()->prepare($this->_sqlUnion->output());
-                $sth->execute($this->_sqlUnion->getBindings());
-                break;
-
-            case self::SQL_USE_RAW:
-                $sth = $this->getDb()->prepare($this->_sqlRaw);
-                $sth->execute($this->_sqlBinding);
-                break;
-
-            default:
-                return $this;
-        }
+        $sth = $this->getRunStatement();
 
         while ( $row = $sth->fetch(PDO::FETCH_ASSOC) )
         {
@@ -204,10 +181,48 @@ class Set implements \Iterator, \Countable, \JsonSerializable
      */
     public function runForCount()
     {
-        $statement = $this->getDb()->prepare($this->_sqlSelect->output());
-        $statement->execute($this->_sqlSelect->getBindings());
+        $statement = $this->getRunStatement();
 
         return $statement->rowCount();
+    }
+
+    /**
+     * Select the correct SQL engine and return a PDO statement that can be
+     * worked with.
+     *
+     * @return PDOStatement
+     *
+     * @throws \Exception
+     */
+    protected function getRunStatement()
+    {
+        switch ( $this->_sqlToUse )
+        {
+            case self::SQL_USE_SELECT:
+                $sth = $this->getDb()->prepare($this->_sqlSelect->output());
+                $sth->execute($this->_sqlSelect->getBindings());
+                break;
+
+            case self::SQL_USE_WITH:
+                $sth = $this->getDb()->prepare($this->_sqlWith->output());
+                $sth->execute($this->_sqlWith->getBindings());
+                break;
+
+            case self::SQL_USE_UNION:
+                $sth = $this->getDb()->prepare($this->_sqlUnion->output());
+                $sth->execute($this->_sqlUnion->getBindings());
+                break;
+
+            case self::SQL_USE_RAW:
+                $sth = $this->getDb()->prepare($this->_sqlRaw);
+                $sth->execute($this->_sqlBinding);
+                break;
+
+            default:
+                throw new \Exception('Unknown SQL engine specifiec');
+        }
+
+        return $sth;
     }
 
     /**
@@ -437,11 +452,11 @@ class Set implements \Iterator, \Countable, \JsonSerializable
         switch ( $driverType )
         {
             case self::POSTGRESQL:
-                $this->_sqlSelect = new DBSql\PostgreSQL;
+                $this->_sqlDriver = new DBSql\PostgreSQL;
                 break;
 
             case self::MYSQL:
-                $this->_sqlSelect = new DBSql\MySQL;
+                $this->_sqlDriver = new DBSql\MySQL;
                 break;
         }
     }
