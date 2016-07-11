@@ -10,21 +10,13 @@ namespace Metrol\DBObject;
 
 use Metrol\DBObject;
 use Metrol\DBSql;
-use PDO;
 
 /**
  * Handles generating and storing a set of DBObjects
  *
  */
-class Set implements \Iterator, \Countable
+class Set extends DBObject\Item\Set
 {
-    /**
-     * The record data for this object in key/value pairs
-     *
-     * @var DBObject[]
-     */
-    protected $_objDataSet;
-
     /**
      * The object type that will be making up this set.
      *
@@ -33,210 +25,32 @@ class Set implements \Iterator, \Countable
     protected $_objItem;
 
     /**
-     * SQL SELECT Driver used to build the query that populates this set
-     *
-     * @var DBSql\SelectInterface
-     */
-    protected $_sql;
-
-    /**
      * Instantiate the object and store the sample DB Item as a reference
      *
      * @param DBObject $item
      */
     public function __construct(DBObject $item)
     {
-        $this->_objItem    = $item;
-        $this->_objDataSet = array();
+        parent::__construct($item->getDb());
 
-        $this->initSqlDriver();
+        $this->_objItem = $item;
+
+        $this->getSqlSelect()->from( $item->getDBTable()->getName() );
     }
 
     /**
-     * @param integer $key
+     * Adds an item to the set
      *
-     * @return bool
-     */
-    public function __isset($key)
-    {
-        return isset($this->_objDataSet[$key]);
-    }
-
-    /**
-     * Run the assembled query and apply it to the data set
+     * @param DBObject $dbo
      *
      * @return $this
      */
-    public function run()
+    public function add(DBObject $dbo)
     {
-        $statement = $this->_objItem->getDb()->prepare($this->_sql->output());
-        $statement->execute($this->_sql->getBindings());
-
-        while ( $row = $statement->fetch(PDO::FETCH_ASSOC) )
+        if ( $dbo instanceof $this->_objItem )
         {
-            $item = clone $this->_objItem;
-
-            foreach ( $row as $field => $value )
-            {
-                $item->set($field, $value);
-            }
-
-            $this->_objDataSet[] = $item;
+            $this->_objDataSet[] = $dbo;
         }
-
-        return $this;
-    }
-
-    /**
-     * Run the assembled query, but only fetch the count of the records.
-     *
-     * @return integer
-     */
-    public function runForCount()
-    {
-        $statement = $this->_objItem->getDb()->prepare($this->_sql->output());
-        $statement->execute($this->_sql->getBindings());
-
-        return $statement->rowCount();
-    }
-
-    /**
-     * Run the assembled query, but return only the information from the
-     * specified field in an array.
-     *
-     * The data set stored in this object is not populated or affected in any
-     * way by running this.
-     *
-     * @param string $fieldName
-     *
-     * @return array
-     */
-    public function runForField($fieldName)
-    {
-        $this->getSqlSelect()->fields([$fieldName]);
-
-        $statement = $this->_objItem->getDb()->prepare($this->_sql->output());
-        $statement->execute($this->_sql->getBindings());
-
-        $rtn = [];
-
-        while ( $row = $statement->fetch(PDO::FETCH_ASSOC) )
-        {
-            $rtn[] = $row[$fieldName];
-        }
-
-        // Put the fields to come out back to the default
-        $this->getSqlSelect()->fields(['*']);
-
-        return $rtn;
-    }
-
-    /**
-     * Fetch a list of values for a specific field from the dataset as a simple
-     * array.
-     *
-     * @param string $fieldName
-     *
-     * @return array
-     */
-    public function getFieldValues($fieldName)
-    {
-        $rtn = [];
-
-        foreach ( $this->_objDataSet as $item )
-        {
-            $rtn[] = $item->get($fieldName);
-        }
-
-        return $rtn;
-    }
-
-    /**
-     * Fetch a single item based on the index value of the data set
-     *
-     * @param integer $index
-     *
-     * @return DBObject|null
-     */
-    public function get($index)
-    {
-        $rtn = null;
-
-        if ( isset($this->_objDataSet[$index]) )
-        {
-            $rtn = $this->_objDataSet[$index];
-        }
-
-        return $rtn;
-    }
-
-    /**
-     * Fetching the first item off the top of the list
-     *
-     * @return DBObject
-     */
-    public function top()
-    {
-        $this->rewind();
-
-        return $this->current();
-    }
-
-    /**
-     * Find the first item with specified field matching the specified value
-     *
-     * @param string $fieldName
-     * @param mixed  $findValue
-     *
-     * @return DBObject|null
-     */
-    public function find($fieldName, $findValue)
-    {
-        $rtn = null;
-
-        foreach ( $this->_objDataSet as $item )
-        {
-            if ( $item->get($fieldName) == $findValue )
-            {
-                $rtn = $item;
-                break;
-            }
-        }
-
-        return $rtn;
-    }
-
-    /**
-     * Find all items with the specified field matching the specified value
-     *
-     * @param string $fieldName
-     * @param mixed  $findValue
-     *
-     * @return array
-     */
-    public function findAll($fieldName, $findValue)
-    {
-        $rtn = [];
-
-        foreach ( $this->_objDataSet as $item )
-        {
-            if ( $item->get($fieldName) == $findValue )
-            {
-                $rtn[] = $item;
-            }
-        }
-
-        return $rtn;
-    }
-
-    /**
-     * Provide the entire result set
-     *
-     * @return array
-     */
-    public function getDataSet()
-    {
-        return $this->_objDataSet;
     }
 
     /**
@@ -308,110 +122,35 @@ class Set implements \Iterator, \Countable
         return $this;
     }
 
+    /* The following is to prevent the use of anything but a SELECT statement */
+
     /**
-     * Provide the SQL SELECT statement in work
+     * Do not allow a WITH interface to be used here
      *
-     * @return DBSql\SelectInterface
+     * @throws \Exception
      */
-    public function getSqlSelect()
+    public function getSqlWith()
     {
-        return $this->_sql;
+        throw new \Exception('WITH statements not supported for DBObject Set');
     }
 
     /**
-     * Adds an item to the set
+     * Do not allow a UNION interface to be used here
      *
-     * @param DBObject $dbo
-     *
-     * @return $this
+     * @throws \Exception
      */
-    public function add(DBObject $dbo)
+    public function getSqlUnion()
     {
-        if ( $dbo instanceof $this->_objItem )
-        {
-            $this->_objDataSet[] = $dbo;
-        }
+        throw new \Exception('UNION statements not supported for DBObject Set');
     }
 
     /**
-     * Removes all the objects from the set.  Does not remove them from the DB
+     * Do not allow RAW sql to be used here
      *
-     * @return $this
+     * @throws \Exception
      */
-    public function clearSet()
+    public function setRawSQL()
     {
-        $this->_objDataSet = [];
-
-        return $this;
-    }
-
-    /**
-     * Initialize the SQL driver and fill in the table into the FROM clause
-     *
-     */
-    protected function initSqlDriver()
-    {
-        $this->_sql = $this->_objItem->getSqlDriver()->select();
-        $table      = $this->_objItem->getDBTable();
-
-        $this->_sql->from( $table->getFQN() );
-    }
-
-    /* -- Support for SPL interfaces from this point down -- */
-
-    /**
-     *
-     * @return int
-     */
-    public function count()
-    {
-        return count($this->_objDataSet);
-    }
-
-    /**
-     *
-     * @return $this
-     */
-    public function rewind()
-    {
-        reset($this->_objDataSet);
-
-        return $this;
-    }
-
-    /**
-     *
-     * @return DBObject
-     */
-    public function current()
-    {
-        return current($this->_objDataSet);
-    }
-
-    /**
-     *
-     * @return integer
-     */
-    public function key()
-    {
-        return key($this->_objDataSet);
-    }
-
-    /**
-     *
-     * @return mixed
-     */
-    public function next()
-    {
-        return next($this->_objDataSet);
-    }
-
-    /**
-     *
-     * @return bool
-     */
-    public function valid()
-    {
-        return key($this->_objDataSet) !== null;
+        throw new \Exception('Raw SQL not supported for DBObject Set');
     }
 }
