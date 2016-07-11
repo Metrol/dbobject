@@ -6,7 +6,6 @@
  * @copyright (c) 2016, Michael Collette
  */
 
-
 namespace Metrol\DBObject\Item;
 
 use Metrol\DBObject\Item;
@@ -19,9 +18,24 @@ use PDO;
  */
 class Set implements \Iterator, \Countable
 {
+    /**
+     * PDO DB engine values
+     *
+     * @const string
+     */
     const POSTGRESQL     = 'pgsql';
     const MYSQL          = 'mysql';
     const SQLITE         = 'sqlite';
+
+    /**
+     * Flags for determining which SQL engine, or none at all, to use
+     *
+     * @const string
+     */
+    const SQL_USE_SELECT = 'select';
+    const SQL_USE_UNION  = 'union';
+    const SQL_USE_WITH   = 'with';
+    const SQL_USE_RAW    = 'raw';
 
     /**
      * The record data for this object in key/value pairs
@@ -38,11 +52,53 @@ class Set implements \Iterator, \Countable
     protected $_db;
 
     /**
+     * The SQL factory for the Select, With, and Union query creators
+     *
+     * @var DBSql\DriverInterface
+     */
+    protected $_sqlDriver;
+
+    /**
      * SQL SELECT Driver used to build the query that populates this set
      *
      * @var DBSql\SelectInterface
      */
-    protected $_sql;
+    protected $_sqlSelect;
+
+    /**
+     * SQL WITH Driver used to build the query that populates this set
+     *
+     * @var DBSql\WithInterface
+     */
+    protected $_sqlWith;
+
+    /**
+     * SQL UNION Driver used to build the query that populates this set
+     *
+     * @var DBSql\UnionInterface
+     */
+    protected $_sqlUnion;
+
+    /**
+     * Raw SQL text passed in to be run
+     *
+     * @var string SQL
+     */
+    protected $_sqlRaw;
+
+    /**
+     * Data bindings to apply to raw SQL.  Does not apply to other SQL engines.
+     *
+     * @var array
+     */
+    protected $_sqlBinding;
+
+    /**
+     * Which SQL engine to look to when run() is called
+     *
+     * @var string
+     */
+    protected $_sqlToUse;
 
     /**
      * Instantiate the object set.
@@ -55,6 +111,8 @@ class Set implements \Iterator, \Countable
     {
         $this->_db         = $db;
         $this->_objDataSet = array();
+        $this->_sqlToUse   = self::SQL_USE_SELECT;
+        $this->_sqlBinding = [];
 
         $this->initSqlDriver();
     }
@@ -72,18 +130,51 @@ class Set implements \Iterator, \Countable
     }
 
     /**
+     * Generates a new Item that can be stored in this set.
+     *
+     * @return Item
+     */
+    public function getNewItem()
+    {
+        return new Item;
+    }
+
+    /**
      * Run the assembled query and apply it to the data set
      *
      * @return $this
      */
     public function run()
     {
-        $statement = $this->getDb()->prepare($this->_sql->output());
-        $statement->execute($this->_sql->getBindings());
-
-        while ( $row = $statement->fetch(PDO::FETCH_ASSOC) )
+        switch ( $this->_sqlToUse )
         {
-            $item = new Item;
+            case self::SQL_USE_SELECT:
+                $sth = $this->getDb()->prepare($this->_sqlSelect->output());
+                $sth->execute($this->_sqlSelect->getBindings());
+                break;
+
+            case self::SQL_USE_WITH:
+                $sth = $this->getDb()->prepare($this->_sqlWith->output());
+                $sth->execute($this->_sqlWith->getBindings());
+                break;
+
+            case self::SQL_USE_UNION:
+                $sth = $this->getDb()->prepare($this->_sqlUnion->output());
+                $sth->execute($this->_sqlUnion->getBindings());
+                break;
+
+            case self::SQL_USE_RAW:
+                $sth = $this->getDb()->prepare($this->_sqlRaw);
+                $sth->execute($this->_sqlBinding);
+                break;
+
+            default:
+                return $this;
+        }
+
+        while ( $row = $sth->fetch(PDO::FETCH_ASSOC) )
+        {
+            $item = $this->getNewItem();
 
             foreach ( $row as $field => $value )
             {
@@ -103,20 +194,94 @@ class Set implements \Iterator, \Countable
      */
     public function runForCount()
     {
-        $statement = $this->getDb()->prepare($this->_sql->output());
-        $statement->execute($this->_sql->getBindings());
+        $statement = $this->getDb()->prepare($this->_sqlSelect->output());
+        $statement->execute($this->_sqlSelect->getBindings());
 
         return $statement->rowCount();
     }
 
     /**
-     * Provide the SQL SELECT statement in work
+     * Provide the SQL SELECT statement
      *
      * @return DBSql\SelectInterface
      */
     public function getSqlSelect()
     {
-        return $this->_sql;
+        if ( !is_object($this->_sqlSelect) )
+        {
+            $this->_sqlSelect = $this->_sqlDriver->select();
+        }
+
+        $this->_sqlToUse = self::SQL_USE_SELECT;
+
+        return $this->_sqlSelect;
+    }
+
+    /**
+     * Provide the SQL WITH statement
+     *
+     * @return DBSql\WithInterface
+     */
+    public function getSqlWith()
+    {
+        if ( !is_object($this->_sqlWith) )
+        {
+            $this->_sqlWith = $this->_sqlDriver->with();
+        }
+
+        $this->_sqlToUse = self::SQL_USE_WITH;
+
+        return $this->_sqlWith;
+    }
+
+    /**
+     * Provide the SQL UNION statement
+     *
+     * @return DBSql\UnionInterface
+     */
+    public function getSqlUnion()
+    {
+        if ( !is_object($this->_sqlUnion) )
+        {
+            $this->_sqlUnion = $this->_sqlDriver->union();
+        }
+
+        $this->_sqlToUse = self::SQL_USE_WITH;
+
+        return $this->_sqlUnion;
+    }
+
+    /**
+     * Sets raw SQL as the query to be run
+     *
+     * @param string $sql
+     *
+     * @return $this
+     */
+    public function setRawSQL($sql)
+    {
+        $this->_sqlRaw = $sql;
+
+        $this->_sqlToUse = self::SQL_USE_RAW;
+
+        return $this;
+    }
+
+    /**
+     * Sets data bindings for the RawSQL.
+     *
+     * This is completely ignored by any other SQL engine type.  You need to
+     * bind with those specific engines if doing so manually.
+     *
+     * @param array $bindings
+     *
+     * @return $this
+     */
+    public function setRawSQLBindings(array $bindings)
+    {
+        $this->_sqlBinding = $bindings;
+
+        return $this;
     }
 
     /**
@@ -262,11 +427,11 @@ class Set implements \Iterator, \Countable
         switch ( $driverType )
         {
             case self::POSTGRESQL:
-                $this->_sql = new DBSql\PostgreSQL\Select;
+                $this->_sqlSelect = new DBSql\PostgreSQL;
                 break;
 
             case self::MYSQL:
-                $this->_sql = new DBSql\MySQL\Select;
+                $this->_sqlSelect = new DBSql\MySQL;
                 break;
         }
     }
