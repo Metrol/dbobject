@@ -66,6 +66,13 @@ class DBObject extends Item
     protected $_objLoadStatus;
 
     /**
+     * The last SQL statement called
+     *
+     * @var DBSql\StatementInterface
+     */
+    protected $_sqlStatement;
+
+    /**
      * Instantiate the object
      *
      * @param DBTable $table
@@ -258,6 +265,8 @@ class DBObject extends Item
 
         $this->_objLoadStatus = self::LOADED;
 
+        $this->_sqlStatement = $sql;
+
         return $this;
     }
 
@@ -307,6 +316,8 @@ class DBObject extends Item
         $this->setId( $this->get($this->getPrimaryKeyField()) );
 
         $this->_objLoadStatus = self::LOADED;
+
+        $this->_sqlStatement = $sql;
 
         return $this;
     }
@@ -360,6 +371,8 @@ class DBObject extends Item
         $statement = $this->getDb()->prepare($delete->output());
         $statement->execute($delete->getBindings());
 
+        $this->_sqlStatement = $delete;
+
         return $this;
     }
 
@@ -381,6 +394,16 @@ class DBObject extends Item
     public function getDBTable()
     {
         return $this->_objTable;
+    }
+
+    /**
+     * Fetch the last SQL statement that this object ran
+     *
+     * @return DBSql\StatementInterface
+     */
+    public function getLastSqlStatement()
+    {
+        return $this->_sqlStatement;
     }
 
     /**
@@ -470,6 +493,8 @@ class DBObject extends Item
                 $this->set($primaryKey, $result[$primaryKey]);
             }
         }
+
+        $this->_sqlStatement = $insert;
     }
 
     /**
@@ -522,5 +547,7 @@ class DBObject extends Item
 
         $statement = $this->getDb()->prepare($update->output());
         $statement->execute($update->getBindings());
+
+        $this->_sqlStatement = $update;
     }
 }
