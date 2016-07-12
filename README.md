@@ -23,44 +23,101 @@ $object = \Metrol\DBObject($table, $db);
 Obviously some dependencies in play here.  Using my `Metrol\DBTable` and `Metrol\DBSql` libraries to work through getting the information about the table, and how to write the SQL.  With this I can start to work immediately with that new object.
 
 ```php
-$object->setPrimaryKeyValue(15)->load();
+$primaryKey = 18;
+$object->load($primaryKey);
 $object->stuff = "Changing info is easy";
 $object->save();   // Record is written back! 
 ```
 
 It really is just that easy.  There's also some protections worked in automatically here.  For instance, say that the `stuff` field was actually an integer.  Passing a string wouldn't have changed the value for that field.  Every field type has basic validation built in to _try_ to do the right thing.  You can also trigger a `strict` mode to throw an exception when types can't be coerced.  The default goal is to prevent errors from showing up.
 
+All the validation work is actually handled by `Metrol\DBTable`, as that's where DBObject passes it through whenever setting a value for use in your PHP program, or when it's ready to be bound for being stored in the database.
+
 Due to how `Metrol\DBSql` works with `PDO`, all the values are prepared with bindings then executed.  Although I can't promise no possibilities for SQL injection (as no library can) every effort has been made to bring the difficulty level of a hack much higher.
 
 You're not restricted to just using the primary key to load a record.  You can also request one to be loaded based on some other SQL where clause.  For example.
 
 ```php
-$object->setCriteria('relatedID = ? and status = ?', [35, 'Active'])
-       ->load();
+$object->loadFromWhere('relatedID = ? and status = ?', [35, 'Active']);
 ```
 
 For a single item such as this, the SQL will only pull in the first record it gets from the criteria and load it into the object.  When you need to pull in a set of these objects using more advanced critera you'll need to use a **Set**.
 
-# Data Sets
+# Extending DBObject
 
-Working with a single object has a lot of value by itself, but we all have to do with sets of records as well.  Not just adding to a stack, but also having the ability to construct the SQL to generate the list.
+You can call to DBObject directly like shown, but you can also extend a class you would like to represent a record in a database.  It could look something like...
 
 ```php
-// Need an object as a reference
-$object = \Metrol\DBObject\PostgreSQL($table, $db);
+class Widget extends \Metrol\DBObject
+{
+    const TABLE_NAME = 'Widgets';
 
-// Define the kind of set this is by the object passed in
-$set = \Metrol\DBObject\Set\PostgreSQL($object);
+    public function __construct($primaryKeyValue = null)
+    {
+        parent::__construct($this->getTable(), Bank::get());
+        
+        if ( $primaryKeyValue !== null )
+        {
+            $this->load($primaryKeyValue);
+        }
+    }
 
-// Set some criteria, then generate the list
-$set->addWhere('status = ?', ['Active'])  // Adds a where clause to the stack
-    ->orderBy('name', 'ASC')
-    ->run();
+    private function getTable()
+    {
+        // Returns a DBTable object
+    }
+}
 ```
 
-Unlike other CRM solutions, no transaction goes to/from the database without the consumer of these objects actives requesting something to happen.  Of course, if you want to have things automatically load you can do that using wrapper methods in your own objects.
+I've personally found it useful to first extend DBObject into an application level, then extend it again to support specific model needs.  Or don't.  You can still make use of DBObject via object composition without the inheritance.  It's entirely up to you what makes sense for your application.
 
-Hopefully you've noticed by now the concepts here are kept pretty simple.  This is supposed to make things easier.  Method names like `load()`, `run()`, `save()`, and `delete()` are used throughout and everything pretty much says what it does.
+# Data Sets
+
+This library supports 2 kinds of data sets.
+
+1. Any query you'd like to toss at it. (Item Set)
+2. Set of specific DBObjects. (DBObject Set) 
+
+## Item Set
+
+If you run a fetch all PDO query you'll get back a simple array of stdClass objects that you would likely iterate through.  You might even have it populate a specific class of values.
+
+The `DBObject\Item\Set` class handles this for you, plus some extra features tossed in on top.  It works with a couple of different kinds of `DBSql` statements to assemble the query, or you can push plain text SQL on in.  Here's a quick example...
+
+```php
+$db = new PDO($dsn);
+$sql = 'SELECT * FROM itsatable WHERE id = ?';
+
+$set = new \Metrol\DBObject\Item\Set($db);
+$set->setRawSQL($sql)
+    ->setRawSQLBinding([12])
+    ->run();
+
+foreach ( $set as $item )
+{
+    echo $item->id, PHP_EOL;
+}
+
+```
+
+That is fully functional code ready to roll out, assuming you had a real PDO connection that is.  Want to make it a bit more friendly for different SQL engines?  Let's write the same thing using the `DBSql` support built in.
+
+```php
+$db = new PDO($dsn);
+$set = new \Metrol\DBObject\Item\Set($db);
+
+// Automatically chooses the SQL engine for your DB based on the PDO driver name
+$select = $set->getSqlSelect();
+
+$select->from('itsatable')
+    ->where('id = ?', 12);
+    
+$set->run();
+
+// etc...
+```
+
+
 
 ## Status
-Very little is ready to roll out yet.  Most of what has been stated thus far is based on an older library that I'm looking to re-implement here.
+
