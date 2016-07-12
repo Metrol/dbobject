@@ -8,9 +8,9 @@
 
 namespace Metrol;
 
+use Metrol;
 use Metrol\DBTable;
 use Metrol\DBSql;
-use Metrol\DBObject\Item;
 use PDO;
 
 /**
@@ -18,7 +18,8 @@ use PDO;
  * and deleting the information.
  *
  */
-class DBObject extends Item
+class DBObject extends Metrol\DBObject\Item
+    implements Metrol\DBObject\CrudInterface
 {
     /**
      * Flag set to specify that a load() has been attempted, and was successful
@@ -106,6 +107,7 @@ class DBObject extends Item
     }
 
     /**
+     * Fetches a value from the specified field
      *
      * @param string $field
      *
@@ -124,6 +126,7 @@ class DBObject extends Item
     }
 
     /**
+     * Sets a value for a field
      *
      * @param string $field
      * @param mixed  $value
@@ -201,7 +204,12 @@ class DBObject extends Item
     }
 
     /**
-     * @inheritdoc
+     * Saves the object out to the database.
+     *
+     * If the record has been loaded, an update will be attempted.  If not
+     * loaded, then a new record will be added.
+     *
+     * @return $this
      */
     public function save()
     {
@@ -219,7 +227,18 @@ class DBObject extends Item
     }
 
     /**
-     * @inheritdoc
+     * Pulls in the information from a single record based on the value/values
+     * of the primary keys.
+     *
+     * For records with a single primary key, that value may be passed directly
+     * into this method.  Otherwise, the fields in question must have had
+     * their values already set.
+     *
+     * @param mixed $primaryKeyValue
+     *
+     * @return $this
+     *
+     * @throws \UnderflowException When no primary keys are specified
      */
     public function load($primaryKeyValue = null)
     {
@@ -271,7 +290,13 @@ class DBObject extends Item
     }
 
     /**
-     * @inheritdoc
+     * Allows the caller to specify exactly the criteria to be used to load
+     * a record.
+     *
+     * @param string $where The WHERE clause to be passed to the SQL engine
+     * @param mixed|array $binding Values to bind to the WHERE clause
+     *
+     * @return $this
      */
     public function loadFromWhere($where, $binding = null)
     {
