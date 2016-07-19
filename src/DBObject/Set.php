@@ -9,7 +9,6 @@
 namespace Metrol\DBObject;
 
 use Metrol\DBObject;
-use Metrol\DBSql;
 
 /**
  * Handles generating and storing a set of DBObjects
@@ -51,6 +50,28 @@ class Set extends DBObject\Item\Set
         {
             $this->_objDataSet[] = $dbo;
         }
+    }
+
+    /**
+     * Deletes the item at the specified index from the database, and removes
+     * it from the set.
+     *
+     * @param integer $index
+     *
+     * @return $this
+     */
+    public function delete($index)
+    {
+        if ( isset($this->_objDataSet[$index]) )
+        {
+            /** @var DBObject $obj */
+            $obj = $this->get($index);
+            $this->remove($index);
+
+            $obj->delete();
+        }
+
+        return $this;
     }
 
     /**

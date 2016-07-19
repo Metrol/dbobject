@@ -361,6 +361,23 @@ class Set implements \Iterator, \Countable, \JsonSerializable
     }
 
     /**
+     * Remove the specified index from the set.
+     *
+     * @param integer $index
+     *
+     * @return $this
+     */
+    public function remove($index)
+    {
+        if ( isset($this->_objDataSet[$index]) )
+        {
+            unset($this->_objDataSet[$index]);
+        }
+
+        return $this;
+    }
+
+    /**
      * Fetching the first item off the top of the list
      *
      * @return Item
