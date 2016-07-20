@@ -359,6 +359,33 @@ class DBObject extends Metrol\DBObject\Item
     }
 
     /**
+     * Set the load status manually
+     *
+     * @param integer $loadStatus
+     *
+     * @return $this
+     */
+    public function setLoadStatus($loadStatus)
+    {
+        switch ( intval($loadStatus) )
+        {
+            case self::LOADED:
+                $this->_objLoadStatus = self::LOADED;
+                break;
+
+            case self::NOT_LOADED:
+                $this->_objLoadStatus = self::NOT_LOADED;
+                break;
+
+            case self::NOT_FOUND:
+                $this->_objLoadStatus = self::NOT_FOUND;
+                break;
+        }
+
+        return $this;
+    }
+
+    /**
      * Delete the loaded record from the database.
      * Does nothing if no record is loaded.
      *

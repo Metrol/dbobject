@@ -9,6 +9,7 @@
 namespace Metrol\DBObject;
 
 use Metrol\DBObject;
+use PDO;
 
 /**
  * Handles generating and storing a set of DBObjects
@@ -85,6 +86,32 @@ class Set extends DBObject\Item\Set
     {
         return clone $this->_objItem;
     }
+
+    /**
+     * Run the assembled query and apply it to the data set
+     *
+     * @return $this
+     */
+    public function run()
+    {
+        $sth = $this->getRunStatement();
+
+        while ( $row = $sth->fetch(PDO::FETCH_ASSOC) )
+        {
+            $item = $this->getNewItem();
+
+            foreach ( $row as $field => $value )
+            {
+                $item->set($field, $value);
+                $item->setLoadStatus(DBObject::LOADED);
+            }
+
+            $this->_objDataSet[] = $item;
+        }
+
+        return $this;
+    }
+
 
     /**
      * Add a filter with bound values
