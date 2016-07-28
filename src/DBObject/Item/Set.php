@@ -322,7 +322,7 @@ class Set implements \Iterator, \Countable, \JsonSerializable
      */
     public function addRawSQLBinding($label, $value)
     {
-        $this->_sqlBindingsql[] = [
+        $this->_sqlBinding[] = [
             $label => $value
         ];
 
