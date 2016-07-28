@@ -310,6 +310,26 @@ class Set implements \Iterator, \Countable, \JsonSerializable
     }
 
     /**
+     * Adds a data binding for the RawSQL
+     *
+     * This is completely ignored by any other SQL engine type.  You need to
+     * bind with those specific engines if doing so manually.
+     *
+     * @param string $label
+     * @param mixed  $value
+     *
+     * @return $this
+     */
+    public function addRawSQLBinding($label, $value)
+    {
+        $this->_sqlBindingsql[] = [
+            $label => $value
+        ];
+
+        return $this;
+    }
+
+    /**
      * Removes all the objects from the set.  Does not remove them from the DB
      *
      * @return $this
