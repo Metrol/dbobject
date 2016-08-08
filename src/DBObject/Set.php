@@ -112,7 +112,6 @@ class Set extends DBObject\Item\Set
         return $this;
     }
 
-
     /**
      * Add a filter with bound values
      *
@@ -155,6 +154,34 @@ class Set extends DBObject\Item\Set
     public function addOrder($fieldName, $direction = null)
     {
         $this->getSqlSelect()->order($fieldName, $direction);
+
+        return $this;
+    }
+
+    /**
+     * Limit the number of rows that will be returned
+     *
+     * @param integer $rowCount
+     *
+     * @return $this
+     */
+    public function setLimit($rowCount)
+    {
+        $this->getSqlSelect()->limit( intval($rowCount) );
+
+        return $this;
+    }
+
+    /**
+     * Set the offset for where to start the result set
+     *
+     * @param integer $startRow
+     *
+     * @return $this
+     */
+    public function setOffset($startRow)
+    {
+        $this->getSqlSelect()->offset($startRow);
 
         return $this;
     }
@@ -216,7 +243,5 @@ class Set extends DBObject\Item\Set
     public function setRawSQL($sql)
     {
         throw new \Exception('Raw SQL not supported for DBObject Set');
-
-        return $this;
     }
 }
