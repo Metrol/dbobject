@@ -35,7 +35,7 @@ class Set extends DBObject\Item\Set
 
         $this->_objItem = $item;
 
-        $this->getSqlSelect()->from( $item->getDBTable()->getName() );
+        $this->getSqlSelect()->from( $item->getDBTable()->getFQN() );
     }
 
     /**
