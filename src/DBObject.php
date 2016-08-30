@@ -259,7 +259,7 @@ class DBObject extends Metrol\DBObject\Item
         }
 
         $sql = $this->getSqlDriver()->select()
-                    ->from( $this->getDBTable()->getName() )
+                    ->from( $this->getDBTable()->getFQN() )
                     ->where( $primaryKey . ' = ?', $id);
 
         $statement = $this->getDb()->prepare($sql->output());
@@ -307,7 +307,7 @@ class DBObject extends Metrol\DBObject\Item
 
         $sql = $this->getSqlDriver()
             ->select()
-            ->from( $this->getDBTable()->getName() );
+            ->from( $this->getDBTable()->getFQN() );
 
         if ( !empty($binding) )
         {
@@ -409,7 +409,7 @@ class DBObject extends Metrol\DBObject\Item
         }
 
         $delete = $this->getSqlDriver()->delete();
-        $delete->table( $this->getDBTable()->getName() );
+        $delete->table( $this->getDBTable()->getFQN() );
 
         foreach ( $primaryKeys as $primaryKey )
         {
