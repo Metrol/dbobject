@@ -262,6 +262,8 @@ class DBObject extends Metrol\DBObject\Item
                     ->from( $this->getDBTable()->getFQN() )
                     ->where( $primaryKey . ' = ?', $id);
 
+        $this->_sqlStatement = $sql;
+
         $statement = $this->getDb()->prepare($sql->output());
         $statement->execute($sql->getBindings());
 
@@ -281,10 +283,7 @@ class DBObject extends Metrol\DBObject\Item
         }
 
         $this->setId( $this->get($this->getPrimaryKeyField()) );
-
         $this->_objLoadStatus = self::LOADED;
-
-        $this->_sqlStatement = $sql;
 
         return $this;
     }
@@ -309,7 +308,9 @@ class DBObject extends Metrol\DBObject\Item
             ->select()
             ->from( $this->getDBTable()->getFQN() );
 
-        if ( !empty($binding) )
+        $this->_sqlStatement = $sql;
+
+        if ( $binding !== null )
         {
             $sql->where($where, $binding);
         }
@@ -341,8 +342,6 @@ class DBObject extends Metrol\DBObject\Item
         $this->setId( $this->get($this->getPrimaryKeyField()) );
 
         $this->_objLoadStatus = self::LOADED;
-
-        $this->_sqlStatement = $sql;
 
         return $this;
     }
