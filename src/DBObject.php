@@ -244,7 +244,7 @@ class DBObject extends Metrol\DBObject\Item
     {
         $primaryKey = $this->getDBTable()->getPrimaryKeys()[0];
 
-        if ( $primaryKeyValue == null )
+        if ( $primaryKeyValue === null )
         {
             $id = $this->getId();
         }
@@ -253,7 +253,7 @@ class DBObject extends Metrol\DBObject\Item
             $id = $primaryKeyValue;
         }
 
-        if ( $id == null )
+        if ( $id === null )
         {
             throw new \UnderflowException('No primary key value specified. Unable to load');
         }
