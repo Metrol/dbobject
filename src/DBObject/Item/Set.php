@@ -432,6 +432,76 @@ class Set implements \Iterator, \Countable, \JsonSerializable
     }
 
     /**
+     * Provide the item that has the largest value for the specified field.
+     * If all the field values in question are null, the top item in the list
+     * is returned.
+     *
+     * @param string $fieldName
+     *
+     * @return Item|null
+     */
+    public function max($fieldName)
+    {
+        if ( $this->count() == 0 )
+        {
+            return null;
+        }
+
+        $topItem = $this->top();
+
+        foreach ( $this->_objDataSet as $item )
+        {
+            if ( $item->get($fieldName) === null )
+            {
+                continue;
+            }
+
+            if ( $item->get($fieldName) > $topItem->get($fieldName) )
+            {
+                $topItem = $item;
+            }
+        }
+
+        return $topItem;
+    }
+
+    /**
+     * Provide the item that has the smallest value for the specified field.
+     * If all the field values in question are null, the top item in the list
+     * is returned.
+     *
+     * Null values are not used in the comparisons.
+     *
+     * @param string $fieldName
+     *
+     * @return Item|null
+     */
+    public function min($fieldName)
+    {
+        if ( $this->count() == 0 )
+        {
+            return null;
+        }
+
+        $topItem = $this->top();
+
+        foreach ( $this->_objDataSet as $item )
+        {
+            if ( $item->get($fieldName) === null )
+            {
+                continue;
+            }
+
+            if ( $item->get($fieldName) < $topItem->get($fieldName) )
+            {
+                $topItem = $item;
+            }
+        }
+
+        return $topItem;
+    }
+
+    /**
      * Find all items with the specified field matching the specified value
      *
      * @param string $fieldName
