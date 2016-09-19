@@ -222,11 +222,31 @@ class Set extends DBObject\Item\Set
     }
 
     /**
+     * Do not allow a WITH interface to be used here
+     *
+     * @throws \Exception
+     */
+    public function getNewSqlWith()
+    {
+        throw new \Exception('WITH statements not supported for DBObject Set');
+    }
+
+    /**
      * Do not allow a UNION interface to be used here
      *
      * @throws \Exception
      */
     public function getSqlUnion()
+    {
+        throw new \Exception('UNION statements not supported for DBObject Set');
+    }
+
+    /**
+     * Do not allow a UNION interface to be used here
+     *
+     * @throws \Exception
+     */
+    public function getNewSqlUnion()
     {
         throw new \Exception('UNION statements not supported for DBObject Set');
     }

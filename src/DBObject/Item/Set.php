@@ -243,6 +243,20 @@ class Set implements \Iterator, \Countable, \JsonSerializable
     }
 
     /**
+     * Creates a new SQL statement to be used for this set, replacing the
+     * previous one.
+     *
+     * @return DBSql\SelectInterface
+     */
+    public function getNewSqlSelect()
+    {
+        $this->_sqlSelect = $this->_sqlDriver->select();
+        $this->_sqlToUse  = self::SQL_USE_SELECT;
+
+        return $this->_sqlSelect;
+    }
+
+    /**
      * Provide the SQL WITH statement
      *
      * @return DBSql\WithInterface
@@ -260,6 +274,20 @@ class Set implements \Iterator, \Countable, \JsonSerializable
     }
 
     /**
+     * Creates a new SQL statement to be used for this set, replacing the
+     * previous one.
+     *
+     * @return DBSql\WithInterface
+     */
+    public function getNewSqlWith()
+    {
+        $this->_sqlWith  = $this->_sqlDriver->with();
+        $this->_sqlToUse = self::SQL_USE_WITH;
+
+        return $this->_sqlWith;
+    }
+
+    /**
      * Provide the SQL UNION statement
      *
      * @return DBSql\UnionInterface
@@ -271,6 +299,20 @@ class Set implements \Iterator, \Countable, \JsonSerializable
             $this->_sqlUnion = $this->_sqlDriver->union();
         }
 
+        $this->_sqlToUse = self::SQL_USE_WITH;
+
+        return $this->_sqlUnion;
+    }
+
+    /**
+     * Creates a new SQL statement to be used for this set, replacing the
+     * previous one.
+     *
+     * @return DBSql\UnionInterface
+     */
+    public function getNewSqlUnion()
+    {
+        $this->_sqlUnion = $this->_sqlDriver->union();
         $this->_sqlToUse = self::SQL_USE_WITH;
 
         return $this->_sqlUnion;
