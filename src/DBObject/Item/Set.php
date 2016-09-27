@@ -608,6 +608,36 @@ class Set implements \Iterator, \Countable, \JsonSerializable
         }
     }
 
+    /**
+     * Provide a quick check for the data set being empty or not
+     *
+     * @return boolean
+     */
+    public function isEmpty()
+    {
+        if ( count($this->_objDataSet) > 0 )
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Provide a quick check for the data set being empty or not
+     *
+     * @return boolean
+     */
+    public function isNotEmpty()
+    {
+        if ( count($this->_objDataSet) > 0 )
+        {
+            return false;
+        }
+
+        return true;
+    }
+
     /* -- Support for SPL interfaces from this point down -- */
 
     /**
