@@ -76,6 +76,25 @@ class Set extends DBObject\Item\Set
     }
 
     /**
+     * Fetches an item based on the primary key value
+     *
+     * @param mixed $pkVal
+     *
+     * @return DBObject | null
+     */
+    public function getPk($pkVal)
+    {
+        $pkField = $this->_objItem->getPrimaryKeyField();
+
+        if ( $pkField === null )
+        {
+            return null;
+        }
+
+        return $this->find($pkField, $pkVal);
+    }
+
+    /**
      * Generates a new DBObject that can be stored in this set.
      * This is also used by the run() method to know which kind of object to
      * populate.
