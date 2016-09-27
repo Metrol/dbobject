@@ -615,7 +615,7 @@ class Set implements \Iterator, \Countable, \JsonSerializable
      */
     public function isEmpty()
     {
-        if ( count($this->_objDataSet) > 0 )
+        if ( count($this->_objDataSet) == 0 )
         {
             return true;
         }
@@ -632,10 +632,10 @@ class Set implements \Iterator, \Countable, \JsonSerializable
     {
         if ( count($this->_objDataSet) > 0 )
         {
-            return false;
+            return true;
         }
 
-        return true;
+        return false;
     }
 
     /* -- Support for SPL interfaces from this point down -- */
