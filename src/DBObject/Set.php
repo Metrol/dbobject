@@ -163,6 +163,18 @@ class Set extends DBObject\Item\Set
     }
 
     /**
+     * Clear all the filters from the SQL statement
+     *
+     * @return $this
+     */
+    public function clearFilter()
+    {
+        $this->getSqlSelect()->whereReset();
+
+        return $this;
+    }
+
+    /**
      * Add a sort field to the ordering of this set
      *
      * @param string $fieldName
@@ -173,6 +185,18 @@ class Set extends DBObject\Item\Set
     public function addOrder($fieldName, $direction = null)
     {
         $this->getSqlSelect()->order($fieldName, $direction);
+
+        return $this;
+    }
+
+    /**
+     * Clear out all field ordering that may have been specified
+     *
+     * @return $this
+     */
+    public function clearOrder()
+    {
+        $this->getSqlSelect()->orderReset();
 
         return $this;
     }
