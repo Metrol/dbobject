@@ -10,6 +10,7 @@ namespace Metrol\DBObject;
 
 use Metrol\DBObject;
 use PDO;
+use Exception;
 
 /**
  * Handles generating and storing a set of DBObjects
@@ -51,6 +52,8 @@ class Set extends DBObject\Item\Set
         {
             $this->_objDataSet[] = $dbo;
         }
+
+        return $this;
     }
 
     /**
@@ -257,41 +260,41 @@ class Set extends DBObject\Item\Set
     /**
      * Do not allow a WITH interface to be used here
      *
-     * @throws \Exception
+     * @throws Exception
      */
     public function getSqlWith()
     {
-        throw new \Exception('WITH statements not supported for DBObject Set');
+        throw new Exception('WITH statements not supported for DBObject Set');
     }
 
     /**
      * Do not allow a WITH interface to be used here
      *
-     * @throws \Exception
+     * @throws Exception
      */
     public function getNewSqlWith()
     {
-        throw new \Exception('WITH statements not supported for DBObject Set');
+        throw new Exception('WITH statements not supported for DBObject Set');
     }
 
     /**
      * Do not allow a UNION interface to be used here
      *
-     * @throws \Exception
+     * @throws Exception
      */
     public function getSqlUnion()
     {
-        throw new \Exception('UNION statements not supported for DBObject Set');
+        throw new Exception('UNION statements not supported for DBObject Set');
     }
 
     /**
      * Do not allow a UNION interface to be used here
      *
-     * @throws \Exception
+     * @throws Exception
      */
     public function getNewSqlUnion()
     {
-        throw new \Exception('UNION statements not supported for DBObject Set');
+        throw new Exception('UNION statements not supported for DBObject Set');
     }
 
     /**
@@ -301,10 +304,30 @@ class Set extends DBObject\Item\Set
      *
      * @return $this
      *
-     * @throws \Exception
+     * @throws Exception
      */
     public function setRawSQL($sql)
     {
-        throw new \Exception('Raw SQL not supported for DBObject Set');
+        throw new Exception('Raw SQL not supported for DBObject Set');
+    }
+
+    /**
+     * Extend the parent to properly report the kind of object being returned
+     *
+     * @return DBObject
+     */
+    public function current()
+    {
+        return current($this->_objDataSet);
+    }
+
+    /**
+     * Extend the parent to properly report the kind of object being returned
+     *
+     * @return DBObject
+     */
+    public function next()
+    {
+        return next($this->_objDataSet);
     }
 }

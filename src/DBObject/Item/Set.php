@@ -680,7 +680,7 @@ class Set implements \Iterator, \Countable, \JsonSerializable
 
     /**
      *
-     * @return mixed
+     * @return Item
      */
     public function next()
     {
