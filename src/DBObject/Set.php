@@ -57,6 +57,18 @@ class Set extends DBObject\Item\Set
     }
 
     /**
+     * Fetching the first item off the top of the list
+     *
+     * @return DBObject
+     */
+    public function top()
+    {
+        $this->rewind();
+
+        return $this->current();
+    }
+
+    /**
      * Deletes the item at the specified index from the database, and removes
      * it from the set.
      *
@@ -68,7 +80,9 @@ class Set extends DBObject\Item\Set
     {
         if ( isset($this->_objDataSet[$index]) )
         {
-            /** @var DBObject $obj */
+            /**
+             * @var DBObject $obj
+             */
             $obj = $this->get($index);
             $this->remove($index);
 
