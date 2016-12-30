@@ -17,6 +17,7 @@ use PDO;
  * Maps itself to a database record for the purposes of creating, updating,
  * and deleting the information.
  *
+ * @property mixed $id Primary key value, like calling getId() or setId()
  */
 class DBObject extends Metrol\DBObject\Item
     implements Metrol\DBObject\CrudInterface
@@ -44,6 +45,14 @@ class DBObject extends Metrol\DBObject\Item
      * @const integer
      */
     const NOT_FOUND = 86;
+
+    /**
+     * The virtual primary key field that can be used in place of having to
+     * know the actual field name for most uses.
+     *
+     * @const string
+     */
+    const VIRTUAL_PK_FIELD = 'id';
 
     /**
      * The database table that this item will be acting as a front end for
@@ -102,6 +111,10 @@ class DBObject extends Metrol\DBObject\Item
         {
             $rtn = true;
         }
+        elseif ( $field == self::VIRTUAL_PK_FIELD )
+        {
+            $rtn =  true;
+        }
 
         return $rtn;
     }
@@ -121,6 +134,10 @@ class DBObject extends Metrol\DBObject\Item
         {
             $rtn = parent::get($field);
         }
+        elseif ( $field == self::VIRTUAL_PK_FIELD )
+        {
+            $rtn = $this->getId();
+        }
 
         return $rtn;
     }
@@ -135,13 +152,15 @@ class DBObject extends Metrol\DBObject\Item
      */
     public function set($field, $value)
     {
-        if ( !$this->getDBTable()->fieldExists($field) )
+        if ( $this->getDBTable()->fieldExists($field) )
         {
-            return $this;
+            parent::set($field, $this->getDBTable()->getField($field)
+                                     ->getPHPValue($value));
         }
-
-        parent::set($field, $this->getDBTable()->getField($field)
-                                 ->getPHPValue($value));
+        elseif ( $field == self::VIRTUAL_PK_FIELD )
+        {
+            $this->setId($value);
+        }
 
         return $this;
     }
