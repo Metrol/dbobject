@@ -17,7 +17,6 @@ use PDO;
  * Maps itself to a database record for the purposes of creating, updating,
  * and deleting the information.
  *
- * @property mixed $id Primary key value, like calling getId() or setId()
  */
 class DBObject extends Metrol\DBObject\Item
     implements Metrol\DBObject\CrudInterface

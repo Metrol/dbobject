@@ -11,6 +11,7 @@ namespace Metrol\DBObject;
 /**
  * Describes the basic operations needed for a database object
  *
+ * @property mixed $id Primary key value, like calling getId() or setId()
  */
 interface CrudInterface
 {
