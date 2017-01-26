@@ -231,7 +231,7 @@ class DBObject extends Metrol\DBObject\Item
      */
     public function save()
     {
-        if ( $this->getLoadStatus() == self::NOT_LOADED )
+        if ( $this->getLoadStatus() !== self::LOADED )
         {
             $this->insertRecord();
         }
