@@ -93,6 +93,27 @@ class Set extends DBObject\Item\Set
     }
 
     /**
+     * Deletes all the records in this set from the database and empties all
+     * the items stored here.
+     *
+     * @return $this
+     */
+    public function deleteAll()
+    {
+        /**
+         * @var DBObject $item
+         */
+        foreach ( $this as $item )
+        {
+            $item->delete();
+        }
+
+        $this->clear();
+
+        return $this;
+    }
+
+    /**
      * Fetches an item based on the primary key value
      *
      * @param mixed $pkVal
