@@ -9,6 +9,7 @@
 namespace Metrol\DBObject;
 
 use Metrol\DBObject;
+use Metrol\DBSql\SelectInterface;
 use PDO;
 use Exception;
 
@@ -196,6 +197,21 @@ class Set extends DBObject\Item\Set
     public function addValueInFilter($fieldName, array $values)
     {
         $this->getSqlSelect()->whereIn($fieldName, $values);
+
+        return $this;
+    }
+
+    /**
+     * Adds a filter where a field's value must exist within a sub-select SQL
+     *
+     * @param string          $fieldName Which field to filter on
+     * @param SelectInterface $sql       The SQL to look for values
+     *
+     * @return $this
+     */
+    public function addValueInSQL($fieldName, SelectInterface $sql)
+    {
+        $this->getSqlSelect()->whereInSub($fieldName, $sql);
 
         return $this;
     }
