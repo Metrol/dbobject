@@ -381,6 +381,21 @@ class DBObject extends Metrol\DBObject\Item
     }
 
     /**
+     * Returns true if the load status is not marked LOADED.  False if loaded.
+     *
+     * @return boolean
+     */
+    public function isNotLoaded()
+    {
+        if ( $this->_objLoadStatus !== self::LOADED )
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Provide the load status of the object based on the constants of the
      * interface.
      *
