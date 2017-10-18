@@ -88,6 +88,21 @@ interface CrudInterface
     public function loadFromWhere($where, $binding = null);
 
     /**
+     * Returns true if the load status has been marked as LOADED.  Otherwise,
+     * returns false.
+     *
+     * @return boolean
+     */
+    public function isLoaded();
+
+    /**
+     * Returns true if the load status is not marked LOADED.  False if loaded.
+     *
+     * @return boolean
+     */
+    public function isNotLoaded();
+
+    /**
      * Delete the loaded record from the database.
      * Does nothing if no record is loaded.
      *
