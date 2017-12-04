@@ -149,6 +149,8 @@ class Set extends DBObject\Item\Set
      * Run the assembled query and apply it to the data set
      *
      * @return $this
+     *
+     * @throws Exception
      */
     public function run()
     {
@@ -352,8 +354,6 @@ class Set extends DBObject\Item\Set
      * Do not allow RAW sql to be used here
      *
      * @param string $sql
-     *
-     * @return $this
      *
      * @throws Exception
      */
