@@ -154,6 +154,8 @@ class Set implements \Iterator, \Countable, \JsonSerializable
      * Run the assembled query and apply it to the data set
      *
      * @return $this
+     *
+     * @throws \Exception
      */
     public function run()
     {
@@ -178,6 +180,8 @@ class Set implements \Iterator, \Countable, \JsonSerializable
      * Run the assembled query, but only fetch the count of the records.
      *
      * @return integer
+     *
+     * @throws \Exception
      */
     public function runForCount()
     {
@@ -447,6 +451,18 @@ class Set implements \Iterator, \Countable, \JsonSerializable
         $this->rewind();
 
         return $this->current();
+    }
+
+    /**
+     * Reverse the order of the items in the data set
+     *
+     * @return $this
+     */
+    public function reverse()
+    {
+        $this->_objDataSet = array_reverse($this->_objDataSet);
+
+        return $this;
     }
 
     /**
