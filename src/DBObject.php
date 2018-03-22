@@ -9,8 +9,6 @@
 namespace Metrol;
 
 use Metrol;
-use Metrol\DBTable;
-use Metrol\DBSql;
 use PDO;
 
 /**
