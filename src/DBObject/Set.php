@@ -97,10 +97,23 @@ class Set extends DBObject\Item\Set
      * Deletes all the records in this set from the database and empties all
      * the items stored here.
      *
+     * @param boolean $transactionFlag
+     *
      * @return $this
      */
-    public function deleteAll()
+    public function deleteAll($transactionFlag = true)
     {
+        // Automatically disable if already in a transaction
+        if ( $this->getDb()->inTransaction() )
+        {
+            $transactionFlag = false;
+        }
+
+        if ( $transactionFlag )
+        {
+            $this->getDb()->beginTransaction();
+        }
+
         /**
          * @var DBObject $item
          */
@@ -110,6 +123,11 @@ class Set extends DBObject\Item\Set
         }
 
         $this->clear();
+
+        if ( $transactionFlag )
+        {
+            $this->getDb()->commit();
+        }
 
         return $this;
     }
@@ -134,6 +152,9 @@ class Set extends DBObject\Item\Set
             $this->getDb()->beginTransaction();
         }
 
+        /**
+         * @var DBObject $item
+         */
         foreach ( $this as $item )
         {
             $item->save();
