@@ -123,6 +123,12 @@ class Set extends DBObject\Item\Set
      */
     public function save($transactionFlag = true)
     {
+        // Automatically disable if already in a transaction
+        if ( $this->getDb()->inTransaction() )
+        {
+            $transactionFlag = false;
+        }
+
         if ( $transactionFlag )
         {
             $this->getDb()->beginTransaction();
