@@ -184,7 +184,12 @@ class Set extends DBObject\Item\Set
             return null;
         }
 
-        return $this->find($pkField, $pkVal);
+        /**
+         * @var DBObject|null $dbObj
+         */
+        $dbObj = $this->find($pkField, $pkVal);
+
+        return $dbObj;
     }
 
     /**
