@@ -115,6 +115,33 @@ class Set extends DBObject\Item\Set
     }
 
     /**
+     * Saves all the items in this set with transaction support
+     *
+     * @param boolean $transactionFlag
+     *
+     * @return $this
+     */
+    public function save($transactionFlag = true)
+    {
+        if ( $transactionFlag )
+        {
+            $this->getDb()->beginTransaction();
+        }
+
+        foreach ( $this as $item )
+        {
+            $item->save();
+        }
+
+        if ( $transactionFlag )
+        {
+            $this->getDb()->commit();
+        }
+
+        return $this;
+    }
+
+    /**
      * Fetches an item based on the primary key value
      *
      * @param mixed $pkVal
