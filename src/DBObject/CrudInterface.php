@@ -16,6 +16,30 @@ namespace Metrol\DBObject;
 interface CrudInterface
 {
     /**
+     * Flag set to specify that a load() has been attempted, and was successful
+     * in pulling back a record to populate this object.
+     *
+     * @const integer
+     */
+    const LOADED = 1;
+
+    /**
+     * Flag set to specify that a load() has not been attempted.  The object
+     * should be in it's initial state
+     *
+     * @const integer
+     */
+    const NOT_LOADED = 0;
+
+    /**
+     * Flag set to specific a load() was attempted, but a matching record could
+     * not be found.
+     *
+     * @const integer
+     */
+    const NOT_FOUND = 86;
+
+    /**
      * Fetches a value from the specified field
      *
      * @param string $field
