@@ -14,7 +14,8 @@ use PDO;
 use Exception;
 
 /**
- * Handles generating and storing a set of DBObjects
+ * Handles generating and storing a set of DBObjects supporting the CRUD
+ * interface.
  *
  */
 class Set extends DBObject\Item\Set
@@ -22,16 +23,16 @@ class Set extends DBObject\Item\Set
     /**
      * The object type that will be making up this set.
      *
-     * @var DBObject
+     * @var CrudInterface
      */
     protected $_objItem;
 
     /**
      * Instantiate the object and store the sample DB Item as a reference
      *
-     * @param DBObject $item
+     * @param CrudInterface $item
      */
-    public function __construct(DBObject $item)
+    public function __construct(CrudInterface $item)
     {
         parent::__construct($item->getDb());
 
@@ -43,11 +44,11 @@ class Set extends DBObject\Item\Set
     /**
      * Adds an item to the set
      *
-     * @param DBObject $dbo
+     * @param CrudInterface $dbo
      *
      * @return $this
      */
-    public function add(DBObject $dbo)
+    public function add(CrudInterface $dbo)
     {
         if ( $dbo instanceof $this->_objItem )
         {
@@ -60,7 +61,7 @@ class Set extends DBObject\Item\Set
     /**
      * Fetching the first item off the top of the list
      *
-     * @return DBObject
+     * @return CrudInterface
      */
     public function top()
     {
@@ -82,7 +83,7 @@ class Set extends DBObject\Item\Set
         if ( isset($this->_objDataSet[$index]) )
         {
             /**
-             * @var DBObject $obj
+             * @var CrudInterface $obj
              */
             $obj = $this->get($index);
             $this->remove($index);
@@ -115,7 +116,7 @@ class Set extends DBObject\Item\Set
         }
 
         /**
-         * @var DBObject $item
+         * @var CrudInterface $item
          */
         foreach ( $this as $item )
         {
@@ -153,7 +154,7 @@ class Set extends DBObject\Item\Set
         }
 
         /**
-         * @var DBObject $item
+         * @var CrudInterface $item
          */
         foreach ( $this as $item )
         {
@@ -173,7 +174,7 @@ class Set extends DBObject\Item\Set
      *
      * @param mixed $pkVal
      *
-     * @return DBObject | null
+     * @return CrudInterface | null
      */
     public function getPk($pkVal)
     {
@@ -185,7 +186,7 @@ class Set extends DBObject\Item\Set
         }
 
         /**
-         * @var DBObject|null $dbObj
+         * @var CrudInterface|null $dbObj
          */
         $dbObj = $this->find($pkField, $pkVal);
 
@@ -197,7 +198,7 @@ class Set extends DBObject\Item\Set
      * This is also used by the run() method to know which kind of object to
      * populate.
      *
-     * @return DBObject
+     * @return CrudInterface
      */
     public function getNewItem()
     {
@@ -222,7 +223,7 @@ class Set extends DBObject\Item\Set
             foreach ( $row as $field => $value )
             {
                 $item->set($field, $value);
-                $item->setLoadStatus(DBObject::LOADED);
+                $item->setLoadStatus(CrudInterface::LOADED);
             }
 
             $this->_objDataSet[] = $item;
@@ -424,7 +425,7 @@ class Set extends DBObject\Item\Set
     /**
      * Extend the parent to properly report the kind of object being returned
      *
-     * @return DBObject
+     * @return CrudInterface
      */
     public function current()
     {
