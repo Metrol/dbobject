@@ -75,6 +75,13 @@ interface CrudInterface
     public function getId();
 
     /**
+     * Provides the primary key field for this object
+     *
+     * @return string|null
+     */
+    public function getPrimaryKeyField();
+
+    /**
      * Saves the object out to the database.
      *
      * If the record has been loaded, an update will be attempted.  If not
@@ -110,6 +117,23 @@ interface CrudInterface
      * @return $this
      */
     public function loadFromWhere($where, $binding = null);
+
+    /**
+     * Provide the load status of the object based on the constants of the
+     * interface.
+     *
+     * @return integer
+     */
+    public function getLoadStatus();
+
+    /**
+     * Set the load status manually
+     *
+     * @param integer $loadStatus
+     *
+     * @return $this
+     */
+    public function setLoadStatus($loadStatus);
 
     /**
      * Returns true if the load status has been marked as LOADED.  Otherwise,
