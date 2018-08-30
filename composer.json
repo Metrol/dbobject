@@ -21,7 +21,10 @@
     "require" : {
         "php"            : ">=5.5.9",
         "metrol/dbsql"   : "dev-master",
-        "metrol/dbtable" : "dev-master"
+        "metrol/dbtable" : "dev-master",
+        "ext-PDO"   : "*",
+        "ext-json"  : "*"
+
     },
 
     "require-dev": {
