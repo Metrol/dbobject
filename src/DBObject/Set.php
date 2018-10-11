@@ -209,12 +209,17 @@ class Set extends DBObject\Item\Set
      * Run the assembled query and apply it to the data set
      *
      * @return $this
-     *
-     * @throws Exception
      */
     public function run()
     {
-        $sth = $this->getRunStatement();
+        try
+        {
+            $sth = $this->getRunStatement();
+        }
+        catch ( Exception $e )
+        {
+            return $this;
+        }
 
         while ( $row = $sth->fetch(PDO::FETCH_ASSOC) )
         {
