@@ -154,12 +154,17 @@ class Set implements \Iterator, \Countable, \JsonSerializable
      * Run the assembled query and apply it to the data set
      *
      * @return $this
-     *
-     * @throws \Exception
      */
     public function run()
     {
-        $sth = $this->getRunStatement();
+        try
+        {
+            $sth = $this->getRunStatement();
+        }
+        catch (\Exception $e)
+        {
+            return $this;
+        }
 
         while ( $row = $sth->fetch(PDO::FETCH_ASSOC) )
         {
@@ -180,12 +185,17 @@ class Set implements \Iterator, \Countable, \JsonSerializable
      * Run the assembled query, but only fetch the count of the records.
      *
      * @return integer
-     *
-     * @throws \Exception
      */
     public function runForCount()
     {
-        $statement = $this->getRunStatement();
+        try
+        {
+            $statement = $this->getRunStatement();
+        }
+        catch (\Exception $e)
+        {
+            return 0;
+        }
 
         return $statement->rowCount();
     }
