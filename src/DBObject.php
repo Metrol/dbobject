@@ -215,6 +215,8 @@ class DBObject extends Metrol\DBObject\Item
             $this->updateRecord();
         }
 
+        $this->_objLoadStatus = self::LOADED;
+
         return $this;
     }
 
@@ -446,6 +448,8 @@ class DBObject extends Metrol\DBObject\Item
         $statement->execute($delete->getBindings());
 
         $this->_sqlStatement = $delete;
+
+        $this->_objLoadStatus = self::NOT_LOADED;
 
         return $this;
     }
