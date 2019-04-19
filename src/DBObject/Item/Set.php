@@ -8,6 +8,10 @@
 
 namespace Metrol\DBObject\Item;
 
+use Countable;
+use Exception;
+use Iterator;
+use JsonSerializable;
 use Metrol\DBObject\Item;
 use Metrol\DBSql;
 use PDO;
@@ -17,7 +21,7 @@ use PDOStatement;
  * Handles generating and storing a set of database records as object
  *
  */
-class Set implements \Iterator, \Countable, \JsonSerializable
+class Set implements Iterator, Countable, JsonSerializable
 {
     /**
      * PDO DB engine values
@@ -161,7 +165,7 @@ class Set implements \Iterator, \Countable, \JsonSerializable
         {
             $sth = $this->getRunStatement();
         }
-        catch (\Exception $e)
+        catch ( Exception $e)
         {
             return $this;
         }
@@ -192,7 +196,7 @@ class Set implements \Iterator, \Countable, \JsonSerializable
         {
             $statement = $this->getRunStatement();
         }
-        catch (\Exception $e)
+        catch ( Exception $e)
         {
             return 0;
         }
@@ -206,7 +210,7 @@ class Set implements \Iterator, \Countable, \JsonSerializable
      *
      * @return PDOStatement
      *
-     * @throws \Exception
+     * @throws Exception
      */
     protected function getRunStatement()
     {
@@ -233,7 +237,7 @@ class Set implements \Iterator, \Countable, \JsonSerializable
                 break;
 
             default:
-                throw new \Exception('Unknown SQL engine specifiec');
+                throw new Exception('Unknown SQL engine specifiec');
         }
 
         return $sth;
@@ -618,7 +622,7 @@ class Set implements \Iterator, \Countable, \JsonSerializable
      */
     protected function initSqlDriver()
     {
-        $driverType = $this->getDb()->getAttribute(\PDO::ATTR_DRIVER_NAME);
+        $driverType = $this->getDb()->getAttribute(PDO::ATTR_DRIVER_NAME);
 
         $driver = null;
 
