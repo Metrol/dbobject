@@ -9,29 +9,46 @@
 
 namespace Metrol\Tests;
 
-use Metrol\DBTable;
 use Metrol\DBObject;
+use Metrol\DBTable;
+use PDO;
+use PDOException;
+use PHPUnit_Framework_TestCase;
 
 /**
  * Test reading/writing information into and out of some test tables in a
  * PostgreSQL database.
  *
  */
-class PostgreSQLObjectTest extends \PHPUnit_Framework_TestCase
+class PostgreSQLObjectTest extends PHPUnit_Framework_TestCase
 {
     /**
      * File where I put the DB credentials
      *
-     * @const
+     * @const string
      */
     const DB_CREDENTIALS = 'etc/db.ini';
 
     /**
+     * The table used for testing
+     *
+     * @const string
+     */
+    const TABLE_NAME = 'pgtable1';
+
+    /**
      * The database to perform tests on
      *
-     * @var \PDO
+     * @var PDO
      */
     private $db;
+
+    /**
+     * The table being worked with for testing
+     *
+     * @var DBTable\PostgreSQL
+     */
+    private $table;
 
     /**
      * Connect to the database so as to make the $db property available for
@@ -50,10 +67,20 @@ class PostgreSQLObjectTest extends \PHPUnit_Framework_TestCase
         ]);
 
         $opts = [
-            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
         ];
 
-        $this->db = new \PDO($dsn, $ini['DBUSER'], $ini['DBPASS'], $opts);
+        try
+        {
+            $this->db = new PDO($dsn, $ini['DBUSER'], $ini['DBPASS'], $opts);
+        }
+        catch ( PDOException $e )
+        {
+            echo 'Connection to database failed';
+            exit;
+        }
+
+        $this->table = new DBTable\PostgreSQL(self::TABLE_NAME);
     }
 
     /**
@@ -62,15 +89,24 @@ class PostgreSQLObjectTest extends \PHPUnit_Framework_TestCase
      */
     public function tearDown()
     {
-        // $this->db->query('TRUNCATE public.objtest1');
+        $this->clearTable();
         $this->db = null;
+    }
+
+    /**
+     * Disconnect from the database
+     *
+     */
+    private function clearTable()
+    {
+        $this->db->query('TRUNCATE public.' . self::TABLE_NAME);
     }
 
     public function testObjectInsertUpdate()
     {
         $dbo = new objtest1($this->db);
 
-        $this->assertEquals('public.objtest1', $dbo->getDBTable()->getFQN());
+        $this->assertEquals(self::TABLE_NAME, $dbo->getDBTable()->getFQN());
 
         $sth = $this->db->query('SELECT last_value FROM objtest1_prikey_seq');
         $lastID = $sth->fetchObject()->last_value;
