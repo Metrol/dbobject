@@ -34,7 +34,7 @@ class PostgreSQLObjectTest extends PHPUnit_Framework_TestCase
      *
      * @const string
      */
-    const TABLE_NAME = 'pgtable1';
+    const TABLE_NAME = 'public.pgtable1';
 
     /**
      * The database to perform tests on
@@ -99,7 +99,7 @@ class PostgreSQLObjectTest extends PHPUnit_Framework_TestCase
      */
     private function clearTable()
     {
-        $this->db->query('TRUNCATE public.' . self::TABLE_NAME);
+        // $this->db->query('TRUNCATE ' . self::TABLE_NAME);
     }
 
     public function testObjectInsertUpdate()
@@ -108,119 +108,9 @@ class PostgreSQLObjectTest extends PHPUnit_Framework_TestCase
 
         $this->assertEquals(self::TABLE_NAME, $dbo->getDBTable()->getFQN());
 
-        $sth = $this->db->query('SELECT last_value FROM objtest1_prikey_seq');
-        $lastID = $sth->fetchObject()->last_value;
+        $dbo->stringone = 'Howdy';
 
-        $dbo->sometext = 'Howdy there';
-        $dbo->anum     = 123456789;
-        $newID = $dbo->save()->getId();
-
-        $this->assertEquals($lastID + 1, $newID);
-
-        $dboPull = new objtest1($this->db);
-        $dboPull->load($newID);
-
-        $this->assertEquals('Howdy there', $dboPull->sometext);
-        $this->assertEquals(123456789,     $dboPull->anum);
-
-        $dboPull->sometext = 'Hello there';
-        $dboPull->save();
-
-        $dboUpdate = (new objtest1($this->db))->load($newID);
-
-        $this->assertEquals('Hello there', $dboUpdate->sometext);
+        $this->assertEquals('Howdy', $dbo->stringone);
     }
 
-    public function testItemSets()
-    {
-        // Clear out any previous data in the test table
-        $this->db->query('TRUNCATE public.objtest1');
-
-        $inputRecords = [
-            [
-                'sometext' => 'Alpha',
-                'anum'     => 1234
-            ],
-            [
-                'sometext' => 'Bravo',
-                'anum'     => 4321
-            ],
-            [
-                'sometext' => 'Charlie',
-                'anum'     => 3214
-            ],
-            [
-                'sometext' => 'Delta',
-                'anum'     => 2134
-            ],
-            [
-                'sometext' => 'Echo',
-                'anum'     => 1324
-            ],
-            [
-                'sometext' => 'Foxtrot',
-                'anum'     => 1243
-            ],
-            [
-                'sometext' => 'Golf',
-                'anum'     => 3412
-            ],
-            [
-                'sometext' => 'Hotel',
-                'anum'     => 4213
-            ],
-            [
-                'sometext' => 'India',
-                'anum'     => 3142
-            ]
-        ];
-
-        foreach ( $inputRecords as $inputRecord )
-        {
-            $dbo = new objtest1($this->db);
-
-            foreach ( $inputRecord as $field => $val )
-            {
-                $dbo->set($field, $val);
-            }
-
-            $dbo->save();
-        }
-
-        $set = new DBObject\Set(new objtest1($this->db));
-        $set->addOrder('sometext')->run();
-        $this->assertCount(9, $set);
-
-        $topItem = $set->rewind()->current();
-
-        $this->assertEquals('Alpha', $topItem->sometext);
-
-        $set = new DBObject\Set(new objtest1($this->db));
-        $set->addOrder('anum', 'DESC')->run();
-
-        $this->assertCount(9, $set);
-        $topItem = $set->rewind()->current();
-
-        $this->assertEquals('Bravo', $topItem->sometext);
-    }
-
-    /**
-     * Test a generic set of data
-     *
-     * @depends testItemSets
-     */
-    public function testGenericSets()
-    {
-        $set = new DBObject\Item\Set($this->db);
-
-        $sql = $set->getSqlSelect();
-        $sql->from('objtest1')
-            ->fields(['sometext', 'anum'])
-            ->order('sometext');
-        $set->run();
-
-        $this->assertCount(9, $set);
-        $topItem = $set->rewind()->current();
-        $this->assertEquals('Alpha', $topItem->sometext);
-    }
 }
