@@ -10,6 +10,7 @@ namespace Metrol;
 
 use Metrol;
 use PDO;
+use UnderflowException;
 
 /**
  * Maps itself to a database record for the purposes of creating, updating,
@@ -46,7 +47,7 @@ class DBObject extends Metrol\DBObject\Item
      *
      * @var integer
      */
-    protected $_objLoadStatus;
+    protected $_objLoadStatus = self::NOT_LOADED;
 
     /**
      * The last SQL statement called
@@ -68,7 +69,6 @@ class DBObject extends Metrol\DBObject\Item
 
         $this->_objTable      = $table;
         $this->_objDb         = $databaseConnection;
-        $this->_objLoadStatus = self::NOT_LOADED;
     }
 
     /**
@@ -232,7 +232,7 @@ class DBObject extends Metrol\DBObject\Item
      *
      * @return $this
      *
-     * @throws \UnderflowException When no primary keys are specified
+     * @throws UnderflowException When no primary keys are specified
      */
     public function load($primaryKeyValue = null)
     {
@@ -249,7 +249,7 @@ class DBObject extends Metrol\DBObject\Item
 
         if ( $id === null )
         {
-            throw new \UnderflowException('No primary key value specified. Unable to load');
+            throw new UnderflowException('No primary key value specified. Unable to load');
         }
 
         $sql = $this->getSqlDriver()->select()
