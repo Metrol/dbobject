@@ -36,7 +36,7 @@ use PDO;
  * @property DateTime $timetwo      Time with Timezone
  * @property string   $jsonone      Simple JSON string
  * @property string   $xmarkuplang  XML type
- * @property string   $yeanay       Enumerated Field
+ * @property string   $yeahnay      Enumerated Field
  * @property boolean  $trueorfalse  Boolean field
  * @property array    $xypoint      Point
  *
