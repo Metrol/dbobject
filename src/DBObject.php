@@ -440,11 +440,15 @@ class DBObject extends Metrol\DBObject\Item
 
         foreach ( $primaryKeys as $primaryKey )
         {
-            $pkVal = $this->getDBTable()
+            $pKeyFv = $this->getDBTable()
                 ->getField($primaryKey)
                 ->getSqlBoundValue($this->get($primaryKey));
 
-            $delete->where($primaryKey.' = ?', $pkVal );
+            $marker = $pKeyFv->getValueMarker();
+            $value  = $pKeyFv->getBoundValues()[$marker];
+
+            $delete->where($primaryKey.' = ' . $marker );
+            $delete->setBinding($marker, $value);
         }
 
         $statement = $this->getDb()->prepare($delete->output());
