@@ -540,6 +540,11 @@ class DBObject extends Metrol\DBObject\Item
             $marker  = $tblFv->getValueMarker();
             $binding = $tblFv->getBoundValues();
 
+            // echo '-- ', $fieldName, ' --', PHP_EOL;
+            // var_dump($field);
+            // var_dump($tblFv);
+            // echo PHP_EOL;
+
             if ( $marker === null )
             {
                 continue;
