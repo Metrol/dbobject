@@ -9,8 +9,11 @@
 namespace Metrol;
 
 use Metrol;
+use Metrol\DBTable;
+use Metrol\DBSql;
 use PDO;
 use UnderflowException;
+use UnexpectedValueException;
 
 /**
  * Maps itself to a database record for the purposes of creating, updating,
@@ -489,7 +492,7 @@ class DBObject extends Metrol\DBObject\Item
      *
      * @return DBSql\DriverInterface
      *
-     * @throws \UnexpectedValueException  When no engine is found
+     * @throws UnexpectedValueException  When no engine is found
      */
     public function getSqlDriver()
     {
@@ -498,7 +501,7 @@ class DBObject extends Metrol\DBObject\Item
             return DBSql::PostgreSQL();
         }
 
-        throw new \UnexpectedValueException('Unsupported SQL Engine Requested');
+        throw new UnexpectedValueException('Unsupported SQL Engine Requested');
     }
 
     /**
@@ -513,7 +516,6 @@ class DBObject extends Metrol\DBObject\Item
 
         $insert = $this->getSqlDriver()->insert();
         $insert->table($this->getDBTable()->getFQN());
-        $insData = array();
 
         foreach ( $fields as $field )
         {
@@ -530,20 +532,21 @@ class DBObject extends Metrol\DBObject\Item
                 }
             }
 
-            if ( $this->__isset($fieldName) )
+            $tblFv   = $field->getSqlBoundValue($this->get($fieldName));
+            $marker  = $tblFv->getValueMarker();
+            $binding = $tblFv->getBoundValues();
+
+            if ( $marker === null )
             {
-                $value = $field->getSqlBoundValue($this->get($fieldName));
-                $insData[ $fieldName ] = $value;
+                continue;
             }
-        }
 
-        // Nothing to insert?  Time to leave.
-        if ( empty($insData) )
-        {
-            return;
-        }
+            $sqlFv = new DBSql\Field\Value($fieldName);
+            $sqlFv->setBoundValues( $binding )
+                ->setValueMarker( $marker );
 
-        $insert->fieldValues($insData);
+            $insert->addFieldValue($sqlFv);
+        }
 
         // PostgreSQL needs to have a RETURNING statement added with the
         // primary keys for the table assigned to it.
@@ -582,6 +585,7 @@ class DBObject extends Metrol\DBObject\Item
     protected function updateRecord()
     {
         $primaryKeys = $this->getDBTable()->getPrimaryKeys();
+        $fields      = $this->getDBTable()->getFields();
 
         // Cannot update a record without a primary key
         if ( empty($primaryKeys) )
@@ -590,11 +594,12 @@ class DBObject extends Metrol\DBObject\Item
         }
 
         $update = $this->getSqlDriver()->update();
-
         $update->table($this->getDBTable()->getFQN());
 
-        foreach ( $this as $fieldName => $value )
+        foreach ( $fields as $field )
         {
+            $fieldName = $field->getName();
+
             // Primary keys do not get updated here.  They're criteria for what
             // will be updated.
             if ( in_array($fieldName, $primaryKeys) )
@@ -602,23 +607,20 @@ class DBObject extends Metrol\DBObject\Item
                 continue;
             }
 
-            // The field must exist in the table
-            if ( !$this->getDBTable()->fieldExists($fieldName) )
-            {
-                continue;
-            }
+            $tblFv = $field->getSqlBoundValue($this->get($fieldName));
 
-            $bindValue = $this->getDBTable()
-                ->getField($fieldName)
-                ->getSqlBoundValue($value);
+            $sqlFv = new DBSql\Field\Value($fieldName);
+            $sqlFv->setBoundValues( $tblFv->getBoundValues() )
+                ->setValueMarker( $tblFv->getValueMarker() );
 
-            $update->fieldValue($fieldName, '?', $bindValue);
+            $update->addFieldValue($sqlFv);
         }
 
         foreach ( $primaryKeys as $primaryKey )
         {
-            $bindValue = $this->getDBTable()->getField($primaryKey)
-                ->getSqlBoundValue( $this->get($primaryKey));
+            $bindValue = $this->getDBTable()
+                              ->getField($primaryKey)
+                              ->getSqlBoundValue( $this->get($primaryKey));
 
             $update->where($primaryKey . ' = ?', $bindValue);
         }
