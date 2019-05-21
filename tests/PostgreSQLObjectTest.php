@@ -99,18 +99,71 @@ class PostgreSQLObjectTest extends PHPUnit_Framework_TestCase
      */
     private function clearTable()
     {
-        // $this->db->query('TRUNCATE ' . self::TABLE_NAME);
+        $sql = 'TRUNCATE ' . self::TABLE_NAME . ' RESTART IDENTITY';
+
+        $this->db->query($sql);
     }
 
-    public function testObjectInsertUpdate()
+    public function testObjectInsertAndLoad()
     {
         $dbo = new objtest1($this->db);
 
         $this->assertEquals(self::TABLE_NAME, $dbo->getDBTable()->getFQN());
 
-        $dbo->stringone = 'Howdy';
+        $dbo->stringone = 'Howdy There';
+        $dbo->save();
 
-        $this->assertEquals('Howdy', $dbo->stringone);
+        $newID = $dbo->getId();
+
+        $this->assertNotNull($newID);
+        $this->assertEquals($dbo::LOADED, $dbo->getLoadStatus());
+
+        $loadDbo = new objtest1($this->db);
+        $loadDbo->load($newID);
+
+        $this->assertEquals('Howdy There', $loadDbo->stringone);
     }
 
+    public function testObjectUpdate()
+    {
+        $dbo = new objtest1($this->db);
+
+        $this->assertEquals(self::TABLE_NAME, $dbo->getDBTable()->getFQN());
+
+        $dbo->stringone = 'Howdy There';
+        $dbo->save();
+
+        $newID = $dbo->getId();
+
+        $this->assertNotNull($newID);
+        $this->assertEquals($dbo::LOADED, $dbo->getLoadStatus());
+
+        $loadDbo = new objtest1($this->db);
+        $loadDbo->load($newID);
+
+        $this->assertEquals('Howdy There', $loadDbo->stringone);
+
+        $loadDbo->stringtwo = 'ABCDE';
+        $loadDbo->save();
+    }
+
+    public function testInsertComplexField()
+    {
+        $dbo = new objtest1($this->db);
+
+        $this->assertEquals(self::TABLE_NAME, $dbo->getDBTable()->getFQN());
+
+        $dbo->stringone = 'Howdy There';
+        $dbo->xypoint   = [123.99, 456.88];
+        $dbo->save();
+
+        $newID = $dbo->id;
+
+        $dbo = new objtest1($this->db);
+        $dbo->load($newID);
+
+        $this->assertCount(2, $dbo->xypoint);
+        $this->assertEquals(123.99, $dbo->xypoint[0]);
+        $this->assertEquals(456.88, $dbo->xypoint[1]);
+    }
 }
