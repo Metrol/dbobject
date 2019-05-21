@@ -110,7 +110,7 @@ class PostgreSQLObjectTest extends PHPUnit_Framework_TestCase
      * Try a very basic insert, and then load that record back out from the DB
      *
      */
-    public function testObjectInsertAndLoad()
+    public function xtestObjectInsertAndLoad()
     {
         $dbo = new objtest1($this->db);
 
@@ -134,7 +134,7 @@ class PostgreSQLObjectTest extends PHPUnit_Framework_TestCase
      * Inserts a new record, then loads it, then the record is updated in the
      * DB.
      */
-    public function testObjectUpdate()
+    public function xtestObjectUpdate()
     {
         $dbo = new objtest1($this->db);
 
@@ -167,7 +167,7 @@ class PostgreSQLObjectTest extends PHPUnit_Framework_TestCase
      * then loaded, updated, then loaded again to verify the update.
      *
      */
-    public function testInsertUpdateComplexField()
+    public function xtestInsertUpdateComplexField()
     {
         $dbo = new objtest1($this->db);
 
@@ -235,12 +235,12 @@ TEXT;
 
         $dbo->dateone     = '2010-07-04';
         $dbo->datetwo     = '2010-07-04 13:14:12';
-        $dbo->datethree   = '2010-07-04 17:00 PST';
+        $dbo->datethree   = '2010-07-04 17:00-05';
         $dbo->timeone     = '12:45';
         $dbo->timetwo     = '15:23 EST';
 
         $dbo->jsonone     = json_encode(['key1' => 'abcde', 'key2' => 'qwerty']);
-        $dbo->yeanay      = 'Yes';
+        $dbo->yeahnay     = 'Yes';
         $dbo->trueorfalse = true;
         $dbo->xypoint     = [78.123, -54.568];
         $dbo->save();
@@ -254,30 +254,29 @@ TEXT;
         $this->assertEquals($charVal, $dbo->stringtwo);
         $this->assertEquals($textVal, $dbo->stringthree);
 
-        $this->assertEquals(1245789865, $dbo->numberone);
-        $this->assertEquals(2344.7435, $dbo->numbertwo);
-        $this->assertEquals(156151851365184631, $dbo->numberthree);
-        $this->assertEquals(127, $dbo->numberfour);
-        // $this->assertEquals(4321.1234567, $dbo->numberfive);
-        // $this->assertEquals(2345.32, $dbo->numbersix);
-        // $this->assertEquals(45684.23, $dbo->numberseven);
+        $this->assertEquals(1245789865, $dbo->numberone);  // Regular integer
+        $this->assertEquals(2344.7435, $dbo->numbertwo);   // Numeric (8, 4)
+        $this->assertEquals(156151851365184631, $dbo->numberthree); // Big Int
+        $this->assertEquals(127, $dbo->numberfour);                 // Small Int
+        // $this->assertEquals(4321.1234567, $dbo->numberfive);     // Dbl Prec
+        // $this->assertEquals(2345.32, $dbo->numbersix);           // Money
+        // $this->assertEquals(45684.23, $dbo->numberseven);        // Real
 
         $this->assertEquals('2010-07-04', $dbo->dateone->format('Y-m-d'));
         $this->assertEquals('2010-07-04 13:14:12', $dbo->datetwo->format('Y-m-d H:i:s'));
-        // $this->assertEquals('2010-07-04 17:00:00', $dbo->datethree->format('Y-m-d H:i:s'));
+        // $this->assertEquals('2010-07-04 19:00:00-05', $dbo->datethree->format('Y-m-d H:i:s'));
 
         $this->assertEquals('12:45:00', $dbo->timeone);
         $this->assertEquals('15:23:00-05', $dbo->timetwo);
 
-        // $this->assertEquals('{"key1":"abcde","key2":"qwerty"}', $dbo->jsonone);
+        $this->assertEquals('{"key1":"abcde","key2":"qwerty"}', $dbo->jsonone);
 
-        $this->assertEquals('Yes', $dbo->yeanay);
+        $this->assertEquals('Yes', $dbo->yeahnay);
 
         $this->assertTrue($dbo->trueorfalse);
 
         $this->assertCount(2, $dbo->xypoint);
         $this->assertEquals(78.123, $dbo->xypoint[0]);
         $this->assertEquals(-54.568, $dbo->xypoint[1]);
-
     }
 }
