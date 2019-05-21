@@ -34,7 +34,7 @@ use PDO;
  * @property DateTime $datethree    Timestamp with Timezone
  * @property DateTime $timeone      Time only
  * @property DateTime $timetwo      Time with Timezone
- * @property string   $joneone      Simple JSON string
+ * @property string   $jsonone      Simple JSON string
  * @property string   $xmarkuplang  XML type
  * @property string   $yeanay       Enumerated Field
  * @property boolean  $trueorfalse  Boolean field
