@@ -608,25 +608,40 @@ class DBObject extends Metrol\DBObject\Item
             }
 
             $tblFv = $field->getSqlBoundValue($this->get($fieldName));
+            $marker  = $tblFv->getValueMarker();
+            $binding = $tblFv->getBoundValues();
+
+            if ( $marker === null )
+            {
+                continue;
+            }
 
             $sqlFv = new DBSql\Field\Value($fieldName);
-            $sqlFv->setBoundValues( $tblFv->getBoundValues() )
-                ->setValueMarker( $tblFv->getValueMarker() );
+            $sqlFv->setBoundValues( $binding )
+                ->setValueMarker( $marker );
 
             $update->addFieldValue($sqlFv);
         }
 
         foreach ( $primaryKeys as $primaryKey )
         {
-            $bindValue = $this->getDBTable()
-                              ->getField($primaryKey)
-                              ->getSqlBoundValue( $this->get($primaryKey));
+            $pKeyFv = $this->getDBTable()
+                          ->getField($primaryKey)
+                          ->getSqlBoundValue( $this->get($primaryKey) );
 
-            $update->where($primaryKey . ' = ?', $bindValue);
+            $fieldName = $pKeyFv->getFieldName();
+            $marker    = $pKeyFv->getValueMarker();
+            $value     = $pKeyFv->getBoundValues()[$marker];
+
+            $update->where($fieldName . ' = ' . $marker);
+            $update->setBinding($marker, $value);
         }
 
-        $statement = $this->getDb()->prepare($update->output());
-        $statement->execute($update->getBindings());
+        $sql = $update->output();
+        $sqlBinding = $update->getBindings();
+
+        $statement = $this->getDb()->prepare($sql);
+        $statement->execute($sqlBinding);
 
         $this->_sqlStatement = $update;
     }
