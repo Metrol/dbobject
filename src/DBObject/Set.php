@@ -18,7 +18,7 @@ use Exception;
  * interface.
  *
  */
-class Set extends DBObject\Item\Set
+class Set extends DBObject\Item\Set implements DBSetInterface
 {
     /**
      * The object type that will be making up this set.
