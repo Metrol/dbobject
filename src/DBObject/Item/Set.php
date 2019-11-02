@@ -12,6 +12,7 @@ use Countable;
 use Exception;
 use Iterator;
 use JsonSerializable;
+use Metrol\DBObject\ItemSetInterface;
 use Metrol\DBObject\Item;
 use Metrol\DBSql;
 use PDO;
@@ -21,7 +22,7 @@ use PDOStatement;
  * Handles generating and storing a set of database records as object
  *
  */
-class Set implements Iterator, Countable, JsonSerializable
+class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
 {
     /**
      * PDO DB engine values
@@ -202,6 +203,26 @@ class Set implements Iterator, Countable, JsonSerializable
         }
 
         return $statement->rowCount();
+    }
+
+    /**
+     * Provide the entire result set
+     *
+     * @return Item[]
+     */
+    public function output()
+    {
+        return $this->_objDataSet;
+    }
+
+    /**
+     * Provide the entire result set (synonym for output())
+     *
+     * @return Item[]
+     */
+    public function getDataSet()
+    {
+        return $this->_objDataSet;
     }
 
     /**
@@ -597,16 +618,6 @@ class Set implements Iterator, Countable, JsonSerializable
     }
 
     /**
-     * Provide the entire result set
-     *
-     * @return Item[]
-     */
-    public function getDataSet()
-    {
-        return $this->_objDataSet;
-    }
-
-    /**
      * Provide the database connection used in this listing
      *
      * @return PDO
@@ -643,7 +654,7 @@ class Set implements Iterator, Countable, JsonSerializable
      *
      * @return boolean
      */
-    public function isEmpty()
+    public function isEmpty(): bool
     {
         if ( count($this->_objDataSet) == 0 )
         {
@@ -658,7 +669,7 @@ class Set implements Iterator, Countable, JsonSerializable
      *
      * @return boolean
      */
-    public function isNotEmpty()
+    public function isNotEmpty(): bool
     {
         if ( count($this->_objDataSet) > 0 )
         {
@@ -674,7 +685,7 @@ class Set implements Iterator, Countable, JsonSerializable
      *
      * @return int
      */
-    public function count()
+    public function count(): int
     {
         return count($this->_objDataSet);
     }
