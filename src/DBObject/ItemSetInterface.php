@@ -167,4 +167,14 @@ interface ItemSetInterface
      * @return Item|null
      */
     public function min($fieldName);
+
+    /**
+     * Fetch a list of values for a specific field from the dataset as a simple
+     * array.
+     *
+     * @param string $fieldName
+     *
+     * @return array
+     */
+    public function getFieldValues($fieldName);
 }
