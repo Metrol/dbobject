@@ -194,6 +194,24 @@ class Set extends DBObject\Item\Set implements DBSetInterface
     }
 
     /**
+     * Fetch a list of all the primary key values in the list.  If no primary
+     * key, an empty array will be returned.
+     *
+     * @return array
+     */
+    public function getPkValues(): array
+    {
+        $pkField = $this->_objItem->getPrimaryKeyField();
+
+        if ( $pkField === null )
+        {
+            return [];
+        }
+
+        return $this->getFieldValues($pkField);
+    }
+
+    /**
      * Generates a new DBObject that can be stored in this set.
      * This is also used by the run() method to know which kind of object to
      * populate.
