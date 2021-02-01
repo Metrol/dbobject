@@ -62,6 +62,14 @@ interface DBSetInterface extends ItemSetInterface
     public function getPk($pkVal);
 
     /**
+     * Fetch a list of all the primary key values in the list.  If no primary
+     * key, an empty array will be returned.
+     *
+     * @return array
+     */
+    public function getPkValues(): array;
+
+    /**
      * Add a filter with bound values
      *
      * @param string      $whereClause
