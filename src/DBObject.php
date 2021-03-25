@@ -108,7 +108,9 @@ class DBObject extends Metrol\DBObject\Item
 
         if ( $this->getDBTable()->fieldExists($field) )
         {
-            $rtn = parent::get($field);
+            $fldValue = parent::get($field);
+
+            $rtn = $this->getDBTable()->getField($field)->getPHPValue($fldValue);
         }
         elseif ( $field == self::VIRTUAL_PK_FIELD )
         {
