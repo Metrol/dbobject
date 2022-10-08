@@ -19,18 +19,14 @@ interface ItemSetInterface
     /**
      * Provide the SQL SELECT statement
      *
-     * @return DBSql\SelectInterface
      */
-    public function getSqlSelect();
+    public function getSqlSelect(): DBSql\SelectInterface;
 
     /**
      * Sets raw SQL as the query to be run
      *
-     * @param string $sql
-     *
-     * @return $this
      */
-    public function setRawSQL($sql);
+    public function setRawSQL(string $sql): static;
 
     /**
      * Sets data bindings for the RawSQL.
@@ -38,122 +34,94 @@ interface ItemSetInterface
      * This is completely ignored by any other SQL engine type.  You need to
      * bind with those specific engines if doing so manually.
      *
-     * @param array $bindings
-     *
-     * @return $this
      */
-    public function setRawSQLBindings(array $bindings);
+    public function setRawSQLBindings(array $bindings): static;
 
     /**
      * Run the assembled query and apply it to the data set
      *
-     * @return $this
      */
-    public function run();
+    public function run(): static;
 
     /**
      * Run the assembled query, but only fetch the count of the records.
      *
-     * @return integer
      */
-    public function runForCount();
+    public function runForCount(): int;
 
     /**
      * Provide the entire result set
      *
-     * @return Item[]
      */
-    public function output();
+    public function output(): array;
 
     /**
      * Provide a quick check for the data set being empty or not
      *
-     * @return boolean
      */
     public function isEmpty(): bool;
 
     /**
      * Provide a quick check for the data set being empty or not
      *
-     * @return boolean
      */
     public function isNotEmpty(): bool;
 
     /**
+     * How many items in the set
      *
-     * @return int
      */
     public function count(): int;
 
     /**
      * Removes all the objects from the set.  Does not remove them from the DB
      *
-     * @return $this
      */
-    public function clear();
+    public function clear(): static;
 
     /**
      * Fetch a single item based on the index value of the data set
      *
-     * @param integer $index
-     *
-     * @return Item|null
      */
-    public function get($index);
+    public function get(int $index): ?Item;
 
     /**
      * Remove the specified index from the set.
      *
-     * @param integer $index
-     *
-     * @return $this
      */
-    public function remove($index);
+    public function remove(int $index): static;
 
     /**
      * Fetching the first item off the top of the list
      *
-     * @return Item
      */
-    public function top();
+    public function top(): Item;
 
     /**
      * Reverse the order of the items in the data set
      *
-     * @return $this
      */
-    public function reverse();
+    public function reverse(): static;
 
     /**
      * Find the first item with specified field matching the specified value
      *
-     * @param string $fieldName
-     * @param mixed  $findValue
-     *
-     * @return Item|null
      */
-    public function find($fieldName, $findValue);
+    public function find(string $fieldName, mixed $findValue): ?Item;
 
     /**
      * Find all items with the specified field matching the specified value
      *
-     * @param string $fieldName
-     * @param mixed  $findValue
-     *
-     * @return Item[]
      */
-    public function findAll($fieldName, $findValue);
+    public function findAll(string $fieldName, mixed $findValue): array;
 
     /**
      * Provide the item that has the largest value for the specified field.
      * If all the field values in question are null, the top item in the list
      * is returned.
      *
-     * @param string $fieldName
-     *
-     * @return Item|null
      */
-    public function max($fieldName);
+    public function max(string $fieldName): ?Item;
 
     /**
      * Provide the item that has the smallest value for the specified field.
@@ -162,19 +130,13 @@ interface ItemSetInterface
      *
      * Null values are not used in the comparisons.
      *
-     * @param string $fieldName
-     *
-     * @return Item|null
      */
-    public function min($fieldName);
+    public function min(string $fieldName): ?Item;
 
     /**
      * Fetch a list of values for a specific field from the dataset as a simple
      * array.
      *
-     * @param string $fieldName
-     *
-     * @return array
      */
-    public function getFieldValues($fieldName);
+    public function getFieldValues(string $fieldName): array;
 }

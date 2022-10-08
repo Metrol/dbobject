@@ -8,6 +8,10 @@
 
 namespace Metrol\DBObject;
 
+use Metrol\DBTable;
+use PDO;
+use UnderflowException;
+
 /**
  * Describes the basic operations needed for a database object
  *
@@ -25,7 +29,7 @@ interface CrudInterface
 
     /**
      * Flag set to specify that a load() has not been attempted.  The object
-     * should be in it's initial state
+     * should be in its initial state
      *
      * @const integer
      */
@@ -42,44 +46,32 @@ interface CrudInterface
     /**
      * Fetches a value from the specified field
      *
-     * @param string $field
-     *
-     * @return mixed|null
      */
-    public function get($field);
+    public function get(string $field): mixed;
 
     /**
      * Sets a value for a field
      *
-     * @param string $field
-     * @param mixed  $value
-     *
-     * @return $this
      */
-    public function set($field, $value);
+    public function set(string $field, mixed $value): static;
 
     /**
      * Set the primary key value for this object
      *
-     * @param mixed $value
-     *
-     * @return $this
      */
-    public function setId($value);
+    public function setId(int|string $value): static;
 
     /**
      * Provide the primary key value
      *
-     * @return mixed|null
      */
-    public function getId();
+    public function getId(): int|string|null;
 
     /**
      * Provides the primary key field for this object
      *
-     * @return string|null
      */
-    public function getPrimaryKeyField();
+    public function getPrimaryKeyField(): ?string;
 
     /**
      * Saves the object out to the database.
@@ -87,9 +79,8 @@ interface CrudInterface
      * If the record has been loaded, an update will be attempted.  If not
      * loaded, then a new record will be added.
      *
-     * @return $this
      */
-    public function save();
+    public function save(): static;
 
     /**
      * Pulls in the information from a single record based on the value/values
@@ -99,76 +90,59 @@ interface CrudInterface
      * into this method.  Otherwise, the fields in question must have had
      * their values already set.
      *
-     * @param mixed $primaryKeyValue
-     *
-     * @return $this
-     *
-     * @throws \UnderflowException When no primary keys are specified
+     * @throws UnderflowException When no primary keys are specified
      */
-    public function load($primaryKeyValue = null);
+    public function load(int|string $primaryKeyValue = null): static;
 
     /**
      * Allows the caller to specify exactly the criteria to be used to load
      * a record.
      *
-     * @param string $where The WHERE clause to be passed to the SQL engine
-     * @param mixed|array $binding Values to bind to the WHERE clause
-     *
-     * @return $this
      */
-    public function loadFromWhere($where, $binding = null);
+    public function loadFromWhere(string $where, mixed $binding = null): static;
 
     /**
      * Provide the load status of the object based on the constants of the
      * interface.
      *
-     * @return integer
      */
-    public function getLoadStatus();
+    public function getLoadStatus(): int;
 
     /**
      * Set the load status manually
      *
-     * @param integer $loadStatus
-     *
-     * @return $this
      */
-    public function setLoadStatus($loadStatus);
+    public function setLoadStatus(int $loadStatus): static;
 
     /**
      * Returns true if the load status has been marked as LOADED.  Otherwise,
      * returns false.
      *
-     * @return boolean
      */
-    public function isLoaded();
+    public function isLoaded(): bool;
 
     /**
      * Returns true if the load status is not marked LOADED.  False if loaded.
      *
-     * @return boolean
      */
-    public function isNotLoaded();
+    public function isNotLoaded(): bool;
 
     /**
      * Delete the loaded record from the database.
      * Does nothing if no record is loaded.
      *
-     * @return $this
      */
-    public function delete();
+    public function delete(): static;
 
     /**
      * Provide the database connection used for this item
      *
-     * @return \PDO
      */
-    public function getDb();
+    public function getDb(): PDO;
 
     /**
      * Provide the database table to be used for this DB Item
      *
-     * @return \Metrol\DBTable
      */
-    public function getDBTable();
+    public function getDBTable(): DBTable;
 }

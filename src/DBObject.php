@@ -9,8 +9,6 @@
 namespace Metrol;
 
 use Metrol;
-use Metrol\DBTable;
-use Metrol\DBSql;
 use PDO;
 use UnderflowException;
 use UnexpectedValueException;
@@ -27,59 +25,49 @@ class DBObject extends Metrol\DBObject\Item
      * The virtual primary key field that can be used in place of having to
      * know the actual field name for most uses.
      *
-     * @const string
      */
     const VIRTUAL_PK_FIELD = 'id';
 
     /**
      * The database table that this item will be acting as a front end for
      *
-     * @var DBTable
      */
-    protected $_objTable;
+    protected DBTable $_objTable;
 
     /**
      * The database connection used to talk to this object
      *
-     * @var PDO
      */
-    protected $_objDb;
+    protected PDO $_objDb;
 
     /**
      * Tracks the load status for the item
      *
-     * @var integer
      */
-    protected $_objLoadStatus = self::NOT_LOADED;
+    protected int $_objLoadStatus = self::NOT_LOADED;
 
     /**
      * The last SQL statement called
      *
-     * @var DBSql\StatementInterface
      */
-    protected $_sqlStatement;
+    protected DBSql\StatementInterface $_sqlStatement;
 
     /**
      * Instantiate the object
-     *
-     * @param DBTable $table
-     * @param PDO     $databaseConnection
      *
      */
     public function __construct(DBTable $table, PDO $databaseConnection)
     {
         parent::__construct();
 
-        $this->_objTable      = $table;
-        $this->_objDb         = $databaseConnection;
+        $this->_objTable = $table;
+        $this->_objDb    = $databaseConnection;
     }
 
     /**
-     * @param string $field
      *
-     * @return boolean
      */
-    public function __isset($field)
+    public function __isset(mixed $field): bool
     {
         $rtn = false;
 
@@ -98,11 +86,8 @@ class DBObject extends Metrol\DBObject\Item
     /**
      * Fetches a value from the specified field
      *
-     * @param string $field
-     *
-     * @return mixed|null
      */
-    public function get($field)
+    public function get(string $field): mixed
     {
         $rtn = null;
 
@@ -123,12 +108,8 @@ class DBObject extends Metrol\DBObject\Item
     /**
      * Sets a value for a field
      *
-     * @param string $field
-     * @param mixed  $value
-     *
-     * @return $this
      */
-    public function set($field, $value)
+    public function set(string $field, mixed $value): static
     {
         if ( $this->getDBTable()->fieldExists($field) )
         {
@@ -146,9 +127,8 @@ class DBObject extends Metrol\DBObject\Item
     /**
      * Provides the primary key field for this object
      *
-     * @return string|null
      */
-    public function getPrimaryKeyField()
+    public function getPrimaryKeyField(): ?string
     {
         $rtn = null;
 
@@ -165,15 +145,12 @@ class DBObject extends Metrol\DBObject\Item
     /**
      * Set the primary key value for this object
      *
-     * @param mixed $value
-     *
-     * @return $this
      */
-    public function setId($value)
+    public function setId(int|string $value): static
     {
         $pkField = $this->getPrimaryKeyField();
 
-        if ( $pkField !== null )
+        if ( ! is_null($pkField) )
         {
             $this->set($pkField, $value);
         }
@@ -184,15 +161,14 @@ class DBObject extends Metrol\DBObject\Item
     /**
      * Provide the primary key value
      *
-     * @return mixed|null
      */
-    public function getId()
+    public function getId(): int|string|null
     {
         $rtn = null;
 
         $pkField = $this->getPrimaryKeyField();
 
-        if ( $pkField !== null )
+        if ( ! is_null($pkField) )
         {
             $rtn = $this->get($pkField);
         }
@@ -206,9 +182,8 @@ class DBObject extends Metrol\DBObject\Item
      * If the record has been loaded, an update will be attempted.  If not
      * loaded, then a new record will be added.
      *
-     * @return $this
      */
-    public function save()
+    public function save(): static
     {
         if ( $this->getLoadStatus() !== self::LOADED )
         {
@@ -233,29 +208,25 @@ class DBObject extends Metrol\DBObject\Item
      * into this method.  Otherwise, the fields in question must have had
      * their values already set.
      *
-     * @param mixed $primaryKeyValue
-     *
-     * @return $this
-     *
-     * @throws UnderflowException When no primary keys are specified
      */
-    public function load($primaryKeyValue = null)
+    public function load(int|string $primaryKeyValue = null): static
     {
         $primaryKey = $this->getDBTable()->getPrimaryKeys()[0];
 
         if ( $primaryKeyValue === null )
         {
             $id = $this->getId();
+
+            if ( is_null($id) )
+            {
+                throw new UnderflowException('No primary key value specified. Unable to load');
+            }
         }
         else
         {
             $id = $primaryKeyValue;
         }
 
-        if ( $id === null )
-        {
-            throw new UnderflowException('No primary key value specified. Unable to load');
-        }
 
         $sql = $this->getSqlDriver()->select()
                     ->from( $this->getDBTable()->getFQN() )
@@ -291,12 +262,8 @@ class DBObject extends Metrol\DBObject\Item
      * Allows the caller to specify exactly the criteria to be used to load
      * a record.
      *
-     * @param string $where The WHERE clause to be passed to the SQL engine
-     * @param mixed|array $binding Values to bind to the WHERE clause
-     *
-     * @return $this
      */
-    public function loadFromWhere($where, $binding = null)
+    public function loadFromWhere(string $where, mixed $binding = null): static
     {
         if ( $binding !== null and !is_array($binding) )
         {
@@ -349,9 +316,8 @@ class DBObject extends Metrol\DBObject\Item
      * Returns true if the load status has been marked as LOADED.  Otherwise,
      * returns false.
      *
-     * @return boolean
      */
-    public function isLoaded()
+    public function isLoaded(): bool
     {
         if ( $this->_objLoadStatus === self::LOADED )
         {
@@ -364,9 +330,8 @@ class DBObject extends Metrol\DBObject\Item
     /**
      * Returns true if the load status is not marked LOADED.  False if loaded.
      *
-     * @return boolean
      */
-    public function isNotLoaded()
+    public function isNotLoaded(): bool
     {
         if ( $this->_objLoadStatus !== self::LOADED )
         {
@@ -382,7 +347,7 @@ class DBObject extends Metrol\DBObject\Item
      *
      * @return integer
      */
-    public function getLoadStatus()
+    public function getLoadStatus(): int
     {
         return $this->_objLoadStatus;
     }
@@ -390,13 +355,10 @@ class DBObject extends Metrol\DBObject\Item
     /**
      * Set the load status manually
      *
-     * @param integer $loadStatus
-     *
-     * @return $this
      */
-    public function setLoadStatus($loadStatus)
+    public function setLoadStatus(int $loadStatus): static
     {
-        switch ( intval($loadStatus) )
+        switch ( $loadStatus )
         {
             case self::LOADED:
                 $this->_objLoadStatus = self::LOADED;
@@ -418,21 +380,20 @@ class DBObject extends Metrol\DBObject\Item
      * Delete the loaded record from the database.
      * Does nothing if no record is loaded.
      *
-     * @return $this
      */
-    public function delete()
+    public function delete(): static
     {
-        $primaryKeys = $this->getDBTable()->getPrimaryKeys();
-
-        // Cannot delete a record without a primary key
-        if ( empty($primaryKeys) )
+        // This record must be loaded before it can be deleted so that primary
+        // key values are available
+        if ( $this->getLoadStatus() !== self::LOADED )
         {
             return $this;
         }
 
-        // This record must be loaded before it can be deleted so that primary
-        // key values are available
-        if ( $this->getLoadStatus() !== self::LOADED )
+        $primaryKeys = $this->getDBTable()->getPrimaryKeys();
+
+        // Cannot delete a record without a primary key
+        if ( empty($primaryKeys) )
         {
             return $this;
         }
@@ -466,9 +427,8 @@ class DBObject extends Metrol\DBObject\Item
     /**
      * Provide the database connection used for this item
      *
-     * @return PDO
      */
-    public function getDb()
+    public function getDb(): PDO
     {
         return $this->_objDb;
     }
@@ -476,9 +436,8 @@ class DBObject extends Metrol\DBObject\Item
     /**
      * Provide the database table to be used for this DB Item
      *
-     * @return DBTable
      */
-    public function getDBTable()
+    public function getDBTable(): DBTable
     {
         return $this->_objTable;
     }
@@ -486,9 +445,8 @@ class DBObject extends Metrol\DBObject\Item
     /**
      * Fetch the last SQL statement that this object ran
      *
-     * @return DBSql\StatementInterface
      */
-    public function getLastSqlStatement()
+    public function getLastSqlStatement(): DBSql\StatementInterface
     {
         return $this->_sqlStatement;
     }
@@ -497,24 +455,24 @@ class DBObject extends Metrol\DBObject\Item
      * Provide the SQL Driver based on the type of DBTable provided
      *
      * @return DBSql\DriverInterface
-     *
-     * @throws UnexpectedValueException  When no engine is found
      */
-    public function getSqlDriver()
+    public function getSqlDriver(): DBSql\DriverInterface
     {
-        if ( $this->_objTable instanceof DBTable\PostgreSQL )
-        {
-            return DBSql::PostgreSQL();
-        }
+        return DBSql::PostgreSQL();
 
-        throw new UnexpectedValueException('Unsupported SQL Engine Requested');
+        // @TODO Once DBTable implements Mysql I can adjust which driver to use
+        // if ( $this->_objTable instanceof DBTable\PostgreSQL )
+        // {
+        //     return DBSql::PostgreSQL();
+        // }
+        // throw new UnexpectedValueException('Unsupported SQL Engine Requested');
     }
 
     /**
      * Insert a new record from the data in this object
      *
      */
-    protected function insertRecord()
+    protected function insertRecord(): void
     {
         $fetchKey    = false;
         $primaryKeys = $this->getDBTable()->getPrimaryKeys();
@@ -541,11 +499,6 @@ class DBObject extends Metrol\DBObject\Item
             $tblFv   = $field->getSqlBoundValue($this->get($fieldName));
             $marker  = $tblFv->getValueMarker();
             $binding = $tblFv->getBoundValues();
-
-            // echo '-- ', $fieldName, ' --', PHP_EOL;
-            // var_dump($field);
-            // var_dump($tblFv);
-            // echo PHP_EOL;
 
             if ( $marker === null )
             {
@@ -593,7 +546,7 @@ class DBObject extends Metrol\DBObject\Item
      * Update an existing record
      *
      */
-    protected function updateRecord()
+    protected function updateRecord(): void
     {
         $primaryKeys = $this->getDBTable()->getPrimaryKeys();
         $fields      = $this->getDBTable()->getFields();

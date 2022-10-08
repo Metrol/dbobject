@@ -8,6 +8,8 @@
 
 namespace Metrol\DBObject;
 
+use Metrol\DBObject;
+
 /**
  * Define the methods used to support a set of DBObjects
  *
@@ -17,89 +19,63 @@ interface DBSetInterface extends ItemSetInterface
     /**
      * Adds an item to the set
      *
-     * @param CrudInterface $dbo
-     *
-     * @return $this
      */
-    public function add(CrudInterface $dbo);
+    public function add(DBObject $dbo): static;
 
     /**
      * Deletes the item at the specified index from the database, and removes
      * it from the set.
      *
-     * @param integer $index
-     *
-     * @return $this
      */
-    public function delete($index);
+    public function delete(int $index): static;
 
     /**
      * Deletes all the records in this set from the database and empties all
      * the items stored here.
      *
-     * @param boolean $transactionFlag
-     *
-     * @return $this
      */
-    public function deleteAll($transactionFlag = true);
+    public function deleteAll(bool $transactionFlag = true): static;
 
     /**
      * Saves all the items in this set with transaction support
      *
-     * @param boolean $transactionFlag
-     *
-     * @return $this
      */
-    public function save($transactionFlag = true);
+    public function save(bool $transactionFlag = true): static;
 
     /**
      * Fetches an item based on the primary key value
      *
-     * @param mixed $pkVal
-     *
-     * @return CrudInterface | null
      */
-    public function getPk($pkVal);
+    public function getPk(int|string $pkVal): ?Item;
 
     /**
      * Fetch a list of all the primary key values in the list.  If no primary
      * key, an empty array will be returned.
      *
-     * @return array
      */
     public function getPkValues(): array;
 
     /**
      * Add a filter with bound values
      *
-     * @param string      $whereClause
-     * @param mixed|array $bindings
-     *
-     * @return $this
      */
-    public function addFilter($whereClause, $bindings = null);
+    public function addFilter(string $whereClause, mixed $bindings = null): static;
 
     /**
      * Clear all the filters from the SQL statement
      *
-     * @return $this
      */
-    public function clearFilter();
+    public function clearFilter(): static;
 
     /**
      * Add a sort field to the ordering of this set
      *
-     * @param string $fieldName
-     * @param string $direction
-     *
-     * @return $this
      */
-    public function addOrder($fieldName, $direction = null);
+    public function addOrder(string $fieldName, string $direction = null): static;
 
     /**
      * Clear out all field ordering that may have been specified
      *
-     * @return $this
      */
-    public function clearOrder();
+    public function clearOrder(): static;
 }

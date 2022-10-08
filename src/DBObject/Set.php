@@ -23,16 +23,14 @@ class Set extends DBObject\Item\Set implements DBSetInterface
     /**
      * The object type that will be making up this set.
      *
-     * @var CrudInterface
      */
-    protected $_objItem;
+    protected DBObject $_objItem;
 
     /**
      * Instantiate the object and store the sample DB Item as a reference
      *
-     * @param CrudInterface $item
      */
-    public function __construct(CrudInterface $item)
+    public function __construct(DBObject $item)
     {
         parent::__construct($item->getDb());
 
@@ -44,11 +42,8 @@ class Set extends DBObject\Item\Set implements DBSetInterface
     /**
      * Adds an item to the set
      *
-     * @param CrudInterface $dbo
-     *
-     * @return $this
      */
-    public function add(CrudInterface $dbo)
+    public function add(DBObject $dbo): static
     {
         if ( $dbo instanceof $this->_objItem )
         {
@@ -61,9 +56,8 @@ class Set extends DBObject\Item\Set implements DBSetInterface
     /**
      * Fetching the first item off the top of the list
      *
-     * @return CrudInterface
      */
-    public function top()
+    public function top(): Item
     {
         $this->rewind();
 
@@ -74,11 +68,8 @@ class Set extends DBObject\Item\Set implements DBSetInterface
      * Deletes the item at the specified index from the database, and removes
      * it from the set.
      *
-     * @param integer $index
-     *
-     * @return $this
      */
-    public function delete($index)
+    public function delete(int $index): static
     {
         if ( isset($this->_objDataSet[$index]) )
         {
@@ -98,11 +89,8 @@ class Set extends DBObject\Item\Set implements DBSetInterface
      * Deletes all the records in this set from the database and empties all
      * the items stored here.
      *
-     * @param boolean $transactionFlag
-     *
-     * @return $this
      */
-    public function deleteAll($transactionFlag = true)
+    public function deleteAll(bool $transactionFlag = true): static
     {
         // Automatically disable if already in a transaction
         if ( $this->getDb()->inTransaction() )
@@ -136,11 +124,8 @@ class Set extends DBObject\Item\Set implements DBSetInterface
     /**
      * Saves all the items in this set with transaction support
      *
-     * @param boolean $transactionFlag
-     *
-     * @return $this
      */
-    public function save($transactionFlag = true)
+    public function save(bool $transactionFlag = true): static
     {
         // Automatically disable if already in a transaction
         if ( $this->getDb()->inTransaction() )
@@ -172,11 +157,8 @@ class Set extends DBObject\Item\Set implements DBSetInterface
     /**
      * Fetches an item based on the primary key value
      *
-     * @param mixed $pkVal
-     *
-     * @return CrudInterface | null
      */
-    public function getPk($pkVal)
+    public function getPk(int|string $pkVal): ?Item
     {
         $pkField = $this->_objItem->getPrimaryKeyField();
 
@@ -185,12 +167,7 @@ class Set extends DBObject\Item\Set implements DBSetInterface
             return null;
         }
 
-        /**
-         * @var CrudInterface|null $dbObj
-         */
-        $dbObj = $this->find($pkField, $pkVal);
-
-        return $dbObj;
+        return $this->find($pkField, $pkVal);
     }
 
     /**
@@ -216,9 +193,8 @@ class Set extends DBObject\Item\Set implements DBSetInterface
      * This is also used by the run() method to know which kind of object to
      * populate.
      *
-     * @return CrudInterface
      */
-    public function getNewItem()
+    public function getNewItem(): DBObject
     {
         return clone $this->_objItem;
     }
@@ -226,15 +202,14 @@ class Set extends DBObject\Item\Set implements DBSetInterface
     /**
      * Run the assembled query and apply it to the data set
      *
-     * @return $this
      */
-    public function run()
+    public function run(): static
     {
         try
         {
             $sth = $this->getRunStatement();
         }
-        catch ( Exception $e )
+        catch ( Exception )
         {
             return $this;
         }
@@ -258,12 +233,8 @@ class Set extends DBObject\Item\Set implements DBSetInterface
     /**
      * Add a filter with bound values
      *
-     * @param string $whereClause
-     * @param mixed|array  $bindings
-     *
-     * @return $this
      */
-    public function addFilter($whereClause, $bindings = null)
+    public function addFilter(string $whereClause, mixed $bindings = null): static
     {
         $this->getSqlSelect()->where($whereClause, $bindings);
 
@@ -274,12 +245,8 @@ class Set extends DBObject\Item\Set implements DBSetInterface
      * Adds a filter where a field must have a value in one of the items in
      * an array.
      *
-     * @param string $fieldName Which field to filter on
-     * @param array  $values    Values to match
-     *
-     * @return $this
      */
-    public function addValueInFilter($fieldName, array $values)
+    public function addValueInFilter(string $fieldName, array $values): static
     {
         $this->getSqlSelect()->whereIn($fieldName, $values);
 
@@ -289,12 +256,8 @@ class Set extends DBObject\Item\Set implements DBSetInterface
     /**
      * Adds a filter where a field's value must exist within a sub-select SQL
      *
-     * @param string          $fieldName Which field to filter on
-     * @param SelectInterface $sql       The SQL to look for values
-     *
-     * @return $this
      */
-    public function addValueInSQL($fieldName, SelectInterface $sql)
+    public function addValueInSQL(string $fieldName, SelectInterface $sql): static
     {
         $this->getSqlSelect()->whereInSub($fieldName, $sql);
 
@@ -304,9 +267,8 @@ class Set extends DBObject\Item\Set implements DBSetInterface
     /**
      * Clear all the filters from the SQL statement
      *
-     * @return $this
      */
-    public function clearFilter()
+    public function clearFilter(): static
     {
         $this->getSqlSelect()->whereReset();
 
@@ -316,12 +278,8 @@ class Set extends DBObject\Item\Set implements DBSetInterface
     /**
      * Add a sort field to the ordering of this set
      *
-     * @param string $fieldName
-     * @param string $direction
-     *
-     * @return $this
      */
-    public function addOrder($fieldName, $direction = null)
+    public function addOrder(string $fieldName, string $direction = null): static
     {
         $this->getSqlSelect()->order($fieldName, $direction);
 
@@ -331,9 +289,8 @@ class Set extends DBObject\Item\Set implements DBSetInterface
     /**
      * Clear out all field ordering that may have been specified
      *
-     * @return $this
      */
-    public function clearOrder()
+    public function clearOrder(): static
     {
         $this->getSqlSelect()->orderReset();
 
@@ -343,13 +300,10 @@ class Set extends DBObject\Item\Set implements DBSetInterface
     /**
      * Limit the number of rows that will be returned
      *
-     * @param integer $rowCount
-     *
-     * @return $this
      */
-    public function setLimit($rowCount)
+    public function setLimit(int $rowCount): static
     {
-        $this->getSqlSelect()->limit( intval($rowCount) );
+        $this->getSqlSelect()->limit($rowCount);
 
         return $this;
     }
@@ -357,11 +311,8 @@ class Set extends DBObject\Item\Set implements DBSetInterface
     /**
      * Set the offset for where to start the result set
      *
-     * @param integer $startRow
-     *
-     * @return $this
      */
-    public function setOffset($startRow)
+    public function setOffset(int $startRow): static
     {
         $this->getSqlSelect()->offset($startRow);
 
@@ -372,16 +323,12 @@ class Set extends DBObject\Item\Set implements DBSetInterface
      * Filters the list based on the primary key value of the DBObject passed
      * in.
      *
-     * @param DBObject $dbo
-     * @param string   $keyField This is field in the table being queried
-     *
-     * @return $this
      */
-    public function addDBObjectFilter(DBObject $dbo, $keyField = null)
+    public function addDBObjectFilter(DBObject $dbo, string $keyField = null): static
     {
         $field = $keyField;
 
-        if ( $field == null )
+        if ( is_null($field) )
         {
             $field = $dbo->getDBTable()->getPrimaryKeys()[0];
         }
@@ -389,79 +336,5 @@ class Set extends DBObject\Item\Set implements DBSetInterface
         $this->getSqlSelect()->where( $field.' = ?', $dbo->getId() );
 
         return $this;
-    }
-
-    /* The following is to prevent the use of anything but a SELECT statement */
-
-    /**
-     * Do not allow a WITH interface to be used here
-     *
-     * @throws Exception
-     */
-    public function getSqlWith()
-    {
-        throw new Exception('WITH statements not supported for DBObject Set');
-    }
-
-    /**
-     * Do not allow a WITH interface to be used here
-     *
-     * @throws Exception
-     */
-    public function getNewSqlWith()
-    {
-        throw new Exception('WITH statements not supported for DBObject Set');
-    }
-
-    /**
-     * Do not allow a UNION interface to be used here
-     *
-     * @throws Exception
-     */
-    public function getSqlUnion()
-    {
-        throw new Exception('UNION statements not supported for DBObject Set');
-    }
-
-    /**
-     * Do not allow a UNION interface to be used here
-     *
-     * @throws Exception
-     */
-    public function getNewSqlUnion()
-    {
-        throw new Exception('UNION statements not supported for DBObject Set');
-    }
-
-    /**
-     * Do not allow RAW sql to be used here
-     *
-     * @param string $sql
-     *
-     * @throws Exception
-     */
-    public function setRawSQL($sql)
-    {
-        throw new Exception('Raw SQL not supported for DBObject Set');
-    }
-
-    /**
-     * Extend the parent to properly report the kind of object being returned
-     *
-     * @return CrudInterface
-     */
-    public function current()
-    {
-        return current($this->_objDataSet);
-    }
-
-    /**
-     * Extend the parent to properly report the kind of object being returned
-     *
-     * @return DBObject
-     */
-    public function next()
-    {
-        return next($this->_objDataSet);
     }
 }

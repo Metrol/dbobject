@@ -9,7 +9,6 @@
 namespace Metrol\DBObject\Item;
 
 use Countable;
-use Exception;
 use Iterator;
 use JsonSerializable;
 use Metrol\DBObject\ItemSetInterface;
@@ -31,7 +30,6 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
      */
     const POSTGRESQL     = 'pgsql';
     const MYSQL          = 'mysql';
-    const SQLITE         = 'sqlite';
 
     /**
      * Flags for determining which SQL engine, or none at all, to use
@@ -48,77 +46,65 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
      *
      * @var Item[]
      */
-    protected $_objDataSet;
+    protected array $_objDataSet = [];
 
     /**
      * The database connection to be used for the queries to be run
      *
-     * @var PDO
      */
-    protected $_db;
+    protected PDO $_db;
 
     /**
      * The SQL factory for the Select, With, and Union query creators
      *
-     * @var DBSql\DriverInterface
      */
-    protected $_sqlDriver;
+    protected DBSql\DriverInterface $_sqlDriver;
 
     /**
      * SQL SELECT Driver used to build the query that populates this set
      *
-     * @var DBSql\SelectInterface
      */
-    protected $_sqlSelect;
+    protected DBSql\SelectInterface $_sqlSelect;
 
     /**
      * SQL WITH Driver used to build the query that populates this set
      *
-     * @var DBSql\WithInterface
      */
-    protected $_sqlWith;
+    protected DBSql\WithInterface $_sqlWith;
 
     /**
      * SQL UNION Driver used to build the query that populates this set
      *
-     * @var DBSql\UnionInterface
      */
-    protected $_sqlUnion;
+    protected DBSql\UnionInterface $_sqlUnion;
 
     /**
      * Raw SQL text passed in to be run
      *
-     * @var string SQL
      */
-    protected $_sqlRaw;
+    protected string $_sqlRaw;
 
     /**
      * Data bindings to apply to raw SQL.  Does not apply to other SQL engines.
      *
-     * @var array
      */
-    protected $_sqlBinding;
+    protected array $_sqlBinding = [];
 
     /**
      * Which SQL engine to look to when run() is called
      *
-     * @var string
      */
-    protected $_sqlToUse;
+    protected string $_sqlToUse = self::SQL_USE_SELECT;
 
     /**
      * Instantiate the object set.
      * Stores the database connection locally.
      * Initializes the SQL driver to be used.
      *
-     * @param PDO $db
      */
     public function __construct(PDO $db)
     {
-        $this->_db         = $db;
-        $this->_objDataSet = array();
-        $this->_sqlToUse   = self::SQL_USE_SELECT;
-        $this->_sqlBinding = [];
+        $this->_db = $db;
 
         $this->initSqlDriver();
     }
@@ -126,11 +112,8 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
     /**
      * Check for a field name existing in the data set
      *
-     * @param string $key
-     *
-     * @return bool
      */
-    public function __isset($key)
+    public function __isset(mixed $key): bool
     {
         return isset($this->_objDataSet[$key]);
     }
@@ -138,9 +121,8 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
     /**
      * Provide the object data to support json_encode
      *
-     * @return array
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         return $this->_objDataSet;
     }
@@ -148,9 +130,8 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
     /**
      * Generates a new Item that can be stored in this set.
      *
-     * @return Item
      */
-    public function getNewItem()
+    public function getNewItem(): Item
     {
         return new Item;
     }
@@ -158,15 +139,12 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
     /**
      * Run the assembled query and apply it to the data set
      *
-     * @return $this
      */
-    public function run()
+    public function run(): static
     {
-        try
-        {
-            $sth = $this->getRunStatement();
-        }
-        catch ( Exception $e)
+        $sth = $this->getRunStatement();
+
+        if ( is_null($sth) )
         {
             return $this;
         }
@@ -189,15 +167,12 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
     /**
      * Run the assembled query, but only fetch the count of the records.
      *
-     * @return integer
      */
-    public function runForCount()
+    public function runForCount(): int
     {
-        try
-        {
-            $statement = $this->getRunStatement();
-        }
-        catch ( Exception $e)
+        $statement = $this->getRunStatement();
+
+        if ( is_null($statement) )
         {
             return 0;
         }
@@ -210,7 +185,7 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
      *
      * @return Item[]
      */
-    public function output()
+    public function output(): array
     {
         return $this->_objDataSet;
     }
@@ -220,7 +195,7 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
      *
      * @return Item[]
      */
-    public function getDataSet()
+    public function getDataSet(): array
     {
         return $this->_objDataSet;
     }
@@ -229,11 +204,8 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
      * Select the correct SQL engine and return a PDO statement that can be
      * worked with.
      *
-     * @return PDOStatement
-     *
-     * @throws Exception
      */
-    protected function getRunStatement()
+    protected function getRunStatement(): ?PDOStatement
     {
         switch ( $this->_sqlToUse )
         {
@@ -258,7 +230,7 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
                 break;
 
             default:
-                throw new Exception('Unknown SQL engine specifiec');
+                return null;
         }
 
         return $sth;
@@ -267,11 +239,10 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
     /**
      * Provide the SQL SELECT statement
      *
-     * @return DBSql\SelectInterface
      */
-    public function getSqlSelect()
+    public function getSqlSelect(): DBSql\SelectInterface
     {
-        if ( !is_object($this->_sqlSelect) )
+        if ( ! isset($this->_sqlSelect) )
         {
             $this->_sqlSelect = $this->_sqlDriver->select();
         }
@@ -285,9 +256,8 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
      * Creates a new SQL statement to be used for this set, replacing the
      * previous one.
      *
-     * @return DBSql\SelectInterface
      */
-    public function getNewSqlSelect()
+    public function getNewSqlSelect(): DBSql\SelectInterface
     {
         $this->_sqlSelect = $this->_sqlDriver->select();
         $this->_sqlToUse  = self::SQL_USE_SELECT;
@@ -298,11 +268,10 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
     /**
      * Provide the SQL WITH statement
      *
-     * @return DBSql\WithInterface
      */
-    public function getSqlWith()
+    public function getSqlWith(): DBSql\WithInterface
     {
-        if ( !is_object($this->_sqlWith) )
+        if ( !isset($this->_sqlWith) )
         {
             $this->_sqlWith = $this->_sqlDriver->with();
         }
@@ -316,9 +285,8 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
      * Creates a new SQL statement to be used for this set, replacing the
      * previous one.
      *
-     * @return DBSql\WithInterface
      */
-    public function getNewSqlWith()
+    public function getNewSqlWith(): DBSql\WithInterface
     {
         $this->_sqlWith  = $this->_sqlDriver->with();
         $this->_sqlToUse = self::SQL_USE_WITH;
@@ -329,11 +297,10 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
     /**
      * Provide the SQL UNION statement
      *
-     * @return DBSql\UnionInterface
      */
-    public function getSqlUnion()
+    public function getSqlUnion(): DBSql\UnionInterface
     {
-        if ( !is_object($this->_sqlUnion) )
+        if ( !isset($this->_sqlUnion) )
         {
             $this->_sqlUnion = $this->_sqlDriver->union();
         }
@@ -347,9 +314,8 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
      * Creates a new SQL statement to be used for this set, replacing the
      * previous one.
      *
-     * @return DBSql\UnionInterface
      */
-    public function getNewSqlUnion()
+    public function getNewSqlUnion(): DBSql\UnionInterface
     {
         $this->_sqlUnion = $this->_sqlDriver->union();
         $this->_sqlToUse = self::SQL_USE_WITH;
@@ -360,11 +326,8 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
     /**
      * Sets raw SQL as the query to be run
      *
-     * @param string $sql
-     *
-     * @return $this
      */
-    public function setRawSQL($sql)
+    public function setRawSQL(string $sql): static
     {
         $this->_sqlRaw = $sql;
 
@@ -379,11 +342,8 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
      * This is completely ignored by any other SQL engine type.  You need to
      * bind with those specific engines if doing so manually.
      *
-     * @param array $bindings
-     *
-     * @return $this
      */
-    public function setRawSQLBindings(array $bindings)
+    public function setRawSQLBindings(array $bindings): static
     {
         $this->_sqlBinding = $bindings;
 
@@ -396,12 +356,8 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
      * This is completely ignored by any other SQL engine type.  You need to
      * bind with those specific engines if doing so manually.
      *
-     * @param string $label
-     * @param mixed  $value
-     *
-     * @return $this
      */
-    public function addRawSQLBinding($label, $value)
+    public function addRawSQLBinding(string $label, mixed $value): static
     {
         $this->_sqlBinding[$label] = $value;
 
@@ -411,9 +367,8 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
     /**
      * Removes all the objects from the set.  Does not remove them from the DB
      *
-     * @return $this
      */
-    public function clear()
+    public function clear(): static
     {
         $this->_objDataSet = [];
 
@@ -424,11 +379,8 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
      * Fetch a list of values for a specific field from the dataset as a simple
      * array.
      *
-     * @param string $fieldName
-     *
-     * @return array
      */
-    public function getFieldValues($fieldName)
+    public function getFieldValues(string $fieldName): array
     {
         $rtn = [];
 
@@ -443,11 +395,8 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
     /**
      * Fetch a single item based on the index value of the data set
      *
-     * @param integer $index
-     *
-     * @return Item|null
      */
-    public function get($index)
+    public function get(int $index): ?Item
     {
         $rtn = null;
 
@@ -462,11 +411,8 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
     /**
      * Remove the specified index from the set.
      *
-     * @param integer $index
-     *
-     * @return $this
      */
-    public function remove($index)
+    public function remove(int $index): static
     {
         if ( isset($this->_objDataSet[$index]) )
         {
@@ -479,9 +425,8 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
     /**
      * Fetching the first item off the top of the list
      *
-     * @return Item
      */
-    public function top()
+    public function top(): Item
     {
         $this->rewind();
 
@@ -491,9 +436,8 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
     /**
      * Reverse the order of the items in the data set
      *
-     * @return $this
      */
-    public function reverse()
+    public function reverse(): static
     {
         $this->_objDataSet = array_reverse($this->_objDataSet);
 
@@ -503,12 +447,8 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
     /**
      * Find the first item with specified field matching the specified value
      *
-     * @param string $fieldName
-     * @param mixed  $findValue
-     *
-     * @return Item|null
      */
-    public function find($fieldName, $findValue)
+    public function find(string $fieldName, mixed $findValue): ?Item
     {
         $rtn = null;
 
@@ -529,11 +469,8 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
      * If all the field values in question are null, the top item in the list
      * is returned.
      *
-     * @param string $fieldName
-     *
-     * @return Item|null
      */
-    public function max($fieldName)
+    public function max(string $fieldName): ?Item
     {
         if ( $this->count() == 0 )
         {
@@ -565,11 +502,8 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
      *
      * Null values are not used in the comparisons.
      *
-     * @param string $fieldName
-     *
-     * @return Item|null
      */
-    public function min($fieldName)
+    public function min(string $fieldName): ?Item
     {
         if ( $this->count() == 0 )
         {
@@ -597,12 +531,9 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
     /**
      * Find all items with the specified field matching the specified value
      *
-     * @param string $fieldName
-     * @param mixed  $findValue
-     *
      * @return Item[]
      */
-    public function findAll($fieldName, $findValue)
+    public function findAll(string $fieldName, mixed $findValue): array
     {
         $rtn = [];
 
@@ -620,9 +551,8 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
     /**
      * Provide the database connection used in this listing
      *
-     * @return PDO
      */
-    public function getDb()
+    public function getDb(): PDO
     {
         return $this->_db;
     }
@@ -631,11 +561,9 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
      * Initialize the SQL driver and fill in the table into the FROM clause
      *
      */
-    protected function initSqlDriver()
+    protected function initSqlDriver(): void
     {
         $driverType = $this->getDb()->getAttribute(PDO::ATTR_DRIVER_NAME);
-
-        $driver = null;
 
         switch ( $driverType )
         {
@@ -652,7 +580,6 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
     /**
      * Provide a quick check for the data set being empty or not
      *
-     * @return boolean
      */
     public function isEmpty(): bool
     {
@@ -667,7 +594,6 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
     /**
      * Provide a quick check for the data set being empty or not
      *
-     * @return boolean
      */
     public function isNotEmpty(): bool
     {
@@ -681,58 +607,34 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
 
     /* -- Support for SPL interfaces from this point down -- */
 
-    /**
-     *
-     * @return int
-     */
     public function count(): int
     {
         return count($this->_objDataSet);
     }
 
-    /**
-     *
-     * @return $this
-     */
-    public function rewind()
+    public function rewind(): static
     {
         reset($this->_objDataSet);
 
         return $this;
     }
 
-    /**
-     *
-     * @return Item
-     */
-    public function current()
+    public function current(): Item
     {
         return current($this->_objDataSet);
     }
 
-    /**
-     *
-     * @return integer
-     */
-    public function key()
+    public function key(): int
     {
         return key($this->_objDataSet);
     }
 
-    /**
-     *
-     * @return Item
-     */
-    public function next()
+    public function next(): Item
     {
         return next($this->_objDataSet);
     }
 
-    /**
-     *
-     * @return bool
-     */
-    public function valid()
+    public function valid(): bool
     {
         return key($this->_objDataSet) !== null;
     }

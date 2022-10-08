@@ -8,18 +8,20 @@
 
 namespace Metrol\DBObject;
 
+use JsonSerializable;
+use Iterator;
+
 /**
  * Acts as a generic holding object that can be fed dynamic information
  *
  */
-class Item implements \JsonSerializable, \Iterator
+class Item implements JsonSerializable, Iterator
 {
     /**
      * The data for this object in key/value pairs
      *
-     * @var array
      */
-    protected $_objData;
+    protected array $_objData = [];
 
     /**
      * Instantiate the object
@@ -27,37 +29,27 @@ class Item implements \JsonSerializable, \Iterator
      */
     public function __construct()
     {
-        $this->_objData = array();
     }
 
     /**
      *
-     * @param string $field
-     *
-     * @return mixed|null
      */
-    public function __get($field)
+    public function __get(string $field): mixed
     {
         return $this->get($field);
     }
 
     /**
-     * @param string $field
-     * @param mixed $value
      *
-     * @return $this
      */
-    public function __set($field, $value)
+    public function __set(string $field, mixed $value)
     {
         return $this->set($field, $value);
     }
 
     /**
-     * @param string $field
-     *
-     * @return boolean
      */
-    public function __isset($field)
+    public function __isset(mixed $field): bool
     {
         $rtn = false;
 
@@ -72,20 +64,13 @@ class Item implements \JsonSerializable, \Iterator
     /**
      * Provide the object data to support json_encode
      *
-     * @return array
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         return $this->_objData;
     }
 
-    /**
-     *
-     * @param string $field
-     *
-     * @return mixed|null
-     */
-    public function get($field)
+    public function get(string $field): mixed
     {
         $rtn = null;
 
@@ -97,14 +82,7 @@ class Item implements \JsonSerializable, \Iterator
         return $rtn;
     }
 
-    /**
-     *
-     * @param string $field
-     * @param mixed  $value
-     *
-     * @return $this
-     */
-    public function set($field, $value)
+    public function set(string $field, mixed $value): static
     {
         $this->_objData[$field] = $value;
 
@@ -114,9 +92,8 @@ class Item implements \JsonSerializable, \Iterator
     /**
      * Provide a list of fields that have been set in this object
      *
-     * @return string[]
      */
-    public function keys()
+    public function keys(): array
     {
         return array_keys($this->_objData);
     }
@@ -124,9 +101,8 @@ class Item implements \JsonSerializable, \Iterator
     /**
      * Provide the entire contents of the data array being stored here
      *
-     * @return array
      */
-    public function getData()
+    public function getData(): array
     {
         return $this->_objData;
     }
@@ -134,11 +110,10 @@ class Item implements \JsonSerializable, \Iterator
     /**
      * Resets the data in this object.
      *
-     * @return $this
      */
-    public function clear()
+    public function clear(): static
     {
-        $this->_objData = array();
+        $this->_objData = [];
 
         return $this;
     }
@@ -148,56 +123,35 @@ class Item implements \JsonSerializable, \Iterator
     /**
      * How many fields have been set
      *
-     * @return int
      */
-    public function count()
+    public function count(): int
     {
         return count($this->_objData);
     }
 
-    /**
-     *
-     * @return $this
-     */
-    public function rewind()
+    public function rewind(): static
     {
         reset($this->_objData);
 
         return $this;
     }
 
-    /**
-     *
-     * @return mixed
-     */
-    public function current()
+    public function current(): mixed
     {
         return current($this->_objData);
     }
 
-    /**
-     *
-     * @return string
-     */
-    public function key()
+    public function key(): string
     {
         return key($this->_objData);
     }
 
-    /**
-     *
-     * @return mixed
-     */
-    public function next()
+    public function next(): mixed
     {
         return next($this->_objData);
     }
 
-    /**
-     *
-     * @return bool
-     */
-    public function valid()
+    public function valid(): bool
     {
         return key($this->_objData) !== null;
     }
