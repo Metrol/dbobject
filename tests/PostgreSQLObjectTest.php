@@ -6,56 +6,50 @@
  * @copyright (c) 2016, Michael Collette
  */
 
-
 namespace Metrol\Tests;
 
-use Metrol\DBObject;
+use PHPUnit\Framework\TestCase;
 use Metrol\DBTable;
 use PDO;
 use PDOException;
-use PHPUnit_Framework_TestCase;
 
 /**
  * Test reading/writing information into and out of some test tables in a
  * PostgreSQL database.
  *
  */
-class PostgreSQLObjectTest extends PHPUnit_Framework_TestCase
+class PostgreSQLObjectTest extends TestCase
 {
     /**
      * File where I put the DB credentials
      *
-     * @const string
      */
     const DB_CREDENTIALS = 'etc/db.ini';
 
     /**
      * The table used for testing
      *
-     * @const string
      */
     const TABLE_NAME = 'public.pgtable1';
 
     /**
      * The database to perform tests on
      *
-     * @var PDO
      */
-    private $db;
+    private PDO $db;
 
     /**
      * The table being worked with for testing
      *
-     * @var DBTable\PostgreSQL
      */
-    private $table;
+    private DBTable\PostgreSQL $table;
 
     /**
-     * Connect to the database so as to make the $db property available for
+     * Connect to the database to make the $db property available for
      * testing.
      *
      */
-    public function setUp()
+    public function setUp(): void
     {
         $ini = parse_ini_file(self::DB_CREDENTIALS);
 
@@ -83,16 +77,6 @@ class PostgreSQLObjectTest extends PHPUnit_Framework_TestCase
         $this->table = new DBTable\PostgreSQL(self::TABLE_NAME);
 
         $this->clearTable();
-    }
-
-    /**
-     * Disconnect from the database
-     *
-     */
-    public function tearDown()
-    {
-        // $this->clearTable();
-        $this->db = null;
     }
 
     /**
