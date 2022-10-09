@@ -11,7 +11,6 @@ namespace Metrol;
 use Metrol;
 use PDO;
 use UnderflowException;
-use UnexpectedValueException;
 
 /**
  * Maps itself to a database record for the purposes of creating, updating,
