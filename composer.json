@@ -14,16 +14,21 @@
         {
             "type": "vcs",
             "url" : "https://github.com/Metrol/dbtable"
+        },
+        {
+            "type": "vcs",
+            "url" : "https://github.com/Metrol/dbconnect"
         }
     ],
 
 
     "require" : {
-        "php"            : "8.0.*",
-        "metrol/dbsql"   : "dev-master",
-        "metrol/dbtable" : "dev-master",
-        "ext-PDO"   : "*",
-        "ext-json"  : "*"
+        "php"              : "8.0.*",
+        "metrol/dbsql"     : "dev-master",
+        "metrol/dbtable"   : "dev-master",
+        "metrol/dbconnect" : "dev-master",
+        "ext-PDO"          : "*",
+        "ext-json"         : "*"
 
     },
 
@@ -37,6 +42,7 @@
             "Metrol\\": "src/"
         }
     },
+
     "autoload-dev": {
         "psr-4": {
             "Metrol\\Tests\\": "tests/"
