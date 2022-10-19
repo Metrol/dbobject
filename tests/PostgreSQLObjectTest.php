@@ -9,9 +9,8 @@
 namespace Metrol\Tests;
 
 use PHPUnit\Framework\TestCase;
-use Metrol\DBTable;
+use Metrol\DBConnect;
 use PDO;
-use PDOException;
 
 /**
  * Test reading/writing information into and out of some test tables in a
@@ -24,7 +23,7 @@ class PostgreSQLObjectTest extends TestCase
      * File where I put the DB credentials
      *
      */
-    const DB_CREDENTIALS = 'etc/db.ini';
+    const DB_CREDENTIALS = 'etc/postgresql_test.ini';
 
     /**
      * The table used for testing
@@ -39,44 +38,19 @@ class PostgreSQLObjectTest extends TestCase
     private PDO $db;
 
     /**
-     * The table being worked with for testing
-     *
-     */
-    private DBTable\PostgreSQL $table;
-
-    /**
      * Connect to the database to make the $db property available for
      * testing.
      *
      */
     public function setUp(): void
     {
-        $ini = parse_ini_file(self::DB_CREDENTIALS);
-
-        $dsn = 'pgsql:';
-        $dsn .= implode(';', [
-            'host=' .  $ini['DBHOST'],
-            'port='.   $ini['DBPORT'],
-            'dbname='. $ini['DBNAME']
-        ]);
-
-        $opts = [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
-        ];
-
-        try
+        if ( isset($this->db) )
         {
-            $this->db = new PDO($dsn, $ini['DBUSER'], $ini['DBPASS'], $opts);
-        }
-        catch ( PDOException $e )
-        {
-            echo 'Connection to database failed';
-            exit;
+            return;
         }
 
-        $this->table = new DBTable\PostgreSQL(self::TABLE_NAME);
-
-        $this->clearTable();
+        (new DBConnect\Load\INI(self::DB_CREDENTIALS))->run();
+        $this->db = DBConnect\Connect\Bank::get();
     }
 
     /**
@@ -94,7 +68,7 @@ class PostgreSQLObjectTest extends TestCase
      * Try a very basic insert, and then load that record back out from the DB
      *
      */
-    public function xtestObjectInsertAndLoad()
+    public function testObjectInsertAndLoad()
     {
         $dbo = new objtest1($this->db);
 
@@ -118,7 +92,7 @@ class PostgreSQLObjectTest extends TestCase
      * Inserts a new record, then loads it, then the record is updated in the
      * DB.
      */
-    public function xtestObjectUpdate()
+    public function testObjectUpdate()
     {
         $dbo = new objtest1($this->db);
 
@@ -151,7 +125,7 @@ class PostgreSQLObjectTest extends TestCase
      * then loaded, updated, then loaded again to verify the update.
      *
      */
-    public function xtestInsertUpdateComplexField()
+    public function testInsertUpdateComplexField()
     {
         $dbo = new objtest1($this->db);
 
