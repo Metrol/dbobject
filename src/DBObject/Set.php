@@ -9,8 +9,11 @@
 namespace Metrol\DBObject;
 
 use Metrol\DBObject;
-use Metrol\DBSql\SelectInterface;
+use Metrol\DBSql;
 use PDO;
+use Iterator;
+use Countable;
+use JsonSerializable;
 use Exception;
 
 /**
@@ -18,8 +21,16 @@ use Exception;
  * interface.
  *
  */
-class Set extends DBObject\Item\Set implements DBSetInterface
+class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
 {
+    /**
+     * PDO DB engine values
+     *
+     * @const string
+     */
+    const POSTGRESQL     = 'pgsql';
+    const MYSQL          = 'mysql';
+
     /**
      * The object type that will be making up this set.
      *
@@ -27,16 +38,265 @@ class Set extends DBObject\Item\Set implements DBSetInterface
     protected DBObject $_objItem;
 
     /**
+     * The record data for this object in key/value pairs
+     *
+     * @var DBObject[]
+     */
+    protected array $_objDataSet = [];
+
+    /**
+     * The database connection to be used for the queries to be run
+     *
+     */
+    protected PDO $_db;
+
+    /**
+     * SQL SELECT Driver used to build the query that populates this set
+     *
+     */
+    protected DBSql\SelectInterface $_sqlSelect;
+
+    /**
      * Instantiate the object and store the sample DB Item as a reference
      *
      */
-    public function __construct(DBObject $item)
+    public function __construct(DBObject $dbObject)
     {
-        parent::__construct($item->getDb());
+        $this->_objItem = $dbObject;
+        $this->_db      = $dbObject->getDb();
 
-        $this->_objItem = $item;
+        $this->initSqlDriver();
+    }
 
-        $this->getSqlSelect()->from( $item->getDBTable()->getFQN() );
+    /**
+     * Provide the object data to support json_encode
+     *
+     */
+    public function jsonSerialize(): array
+    {
+        return $this->_objDataSet;
+    }
+
+    /**
+     * Provide the database connection used in this listing
+     *
+     */
+    public function getDb(): PDO
+    {
+        return $this->_db;
+    }
+
+    /**
+     * Add a filter with bound values
+     *
+     */
+    public function addFilter(string $whereClause, mixed $bindings = null): static
+    {
+        $this->getSqlSelect()->where($whereClause, $bindings);
+
+        return $this;
+    }
+
+    /**
+     * Adds a filter where a field must have a value in one of the items in
+     * an array.
+     *
+     */
+    public function addValueInFilter(string $fieldName, array $values): static
+    {
+        $this->getSqlSelect()->whereIn($fieldName, $values);
+
+        return $this;
+    }
+
+    /**
+     * Adds a filter where a field's value must exist within a sub-select SQL
+     *
+     */
+    public function addValueInSQL(string $fieldName, DBSql\SelectInterface $sql): static
+    {
+        $this->getSqlSelect()->whereInSub($fieldName, $sql);
+
+        return $this;
+    }
+
+    /**
+     * Clear all the filters from the SQL statement
+     *
+     */
+    public function clearFilter(): static
+    {
+        $this->getSqlSelect()->whereReset();
+
+        return $this;
+    }
+
+    /**
+     * Add a sort field to the ordering of this set
+     *
+     */
+    public function addOrder(string $fieldName, string $direction = null): static
+    {
+        $this->getSqlSelect()->order($fieldName, $direction);
+
+        return $this;
+    }
+
+    /**
+     * Clear out all field ordering that may have been specified
+     *
+     */
+    public function clearOrder(): static
+    {
+        $this->getSqlSelect()->orderReset();
+
+        return $this;
+    }
+
+    /**
+     * Limit the number of rows that will be returned
+     *
+     */
+    public function setLimit(int $rowCount): static
+    {
+        $this->getSqlSelect()->limit($rowCount);
+
+        return $this;
+    }
+
+    /**
+     * Set the offset for where to start the result set
+     *
+     */
+    public function setOffset(int $startRow): static
+    {
+        $this->getSqlSelect()->offset($startRow);
+
+        return $this;
+    }
+
+    /**
+     * Filters the list based on the primary key value of the DBObject passed
+     * in.
+     *
+     */
+    public function addDBObjectFilter(DBObject $dbo, string $keyField = null): static
+    {
+        $field = $keyField;
+
+        if ( is_null($field) )
+        {
+            $field = $dbo->getDBTable()->getPrimaryKeys()[0];
+        }
+
+        $this->getSqlSelect()->where( $field.' = ?', $dbo->getId() );
+
+        return $this;
+    }
+
+    /**
+     * Run the assembled query and apply it to the data set
+     *
+     */
+    public function run(): static
+    {
+        try
+        {
+            $sth = $this->getDb()->prepare($this->_sqlSelect->output());
+            $sth->execute($this->_sqlSelect->getBindings());
+        }
+        catch ( Exception )
+        {
+            return $this;
+        }
+
+        while ( $row = $sth->fetch(PDO::FETCH_ASSOC) )
+        {
+            $item = $this->getNewItem();
+
+            foreach ( $row as $field => $value )
+            {
+                $item->set($field, $value);
+                $item->setLoadStatus(CrudInterface::LOADED);
+            }
+
+            $this->_objDataSet[] = $item;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Run the assembled query, but only fetch the count of the records.
+     *
+     */
+    public function runForCount(): int
+    {
+        try
+        {
+            $sth = $this->getDb()->prepare($this->_sqlSelect->output());
+            $sth->execute($this->_sqlSelect->getBindings());
+        }
+        catch ( Exception )
+        {
+            return 0;
+        }
+
+        return $sth->rowCount();
+    }
+
+    /**
+     * Provide the entire result set
+     *
+     * @return DBObject[]
+     */
+    public function output(): array
+    {
+        return $this->_objDataSet;
+    }
+
+    /**
+     * Provide a quick check for the data set being empty or not
+     *
+     */
+    public function isEmpty(): bool
+    {
+        if ( count($this->_objDataSet) == 0 )
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Provide a quick check for the data set being empty or not
+     *
+     */
+    public function isNotEmpty(): bool
+    {
+        if ( count($this->_objDataSet) > 0 )
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Fetch a single item based on the index value of the data set
+     *
+     */
+    public function get(int $index): ?DBObject
+    {
+        $rtn = null;
+
+        if ( isset($this->_objDataSet[$index]) )
+        {
+            $rtn = $this->_objDataSet[$index];
+        }
+
+        return $rtn;
     }
 
     /**
@@ -57,11 +317,168 @@ class Set extends DBObject\Item\Set implements DBSetInterface
      * Fetching the first item off the top of the list
      *
      */
-    public function top(): Item
+    public function top(): DBObject
     {
         $this->rewind();
 
         return $this->current();
+    }
+
+    /**
+     * Reverse the order of the items in the data set
+     *
+     */
+    public function reverse(): static
+    {
+        $this->_objDataSet = array_reverse($this->_objDataSet);
+
+        return $this;
+    }
+
+    /**
+     * Find the first item with specified field matching the specified value
+     *
+     */
+    public function find(string $fieldName, mixed $findValue): ?DBObject
+    {
+        $rtn = null;
+
+        foreach ( $this->_objDataSet as $item )
+        {
+            if ( $item->get($fieldName) == $findValue )
+            {
+                $rtn = $item;
+                break;
+            }
+        }
+
+        return $rtn;
+    }
+
+    /**
+     * Find all items with the specified field matching the specified value
+     *
+     * @return DBObject[]
+     */
+    public function findAll(string $fieldName, mixed $findValue): array
+    {
+        $rtn = [];
+
+        foreach ( $this->_objDataSet as $item )
+        {
+            if ( $item->get($fieldName) == $findValue )
+            {
+                $rtn[] = $item;
+            }
+        }
+
+        return $rtn;
+    }
+
+    /**
+     * Fetch a list of values for a specific field from the dataset as a simple
+     * array.
+     *
+     */
+    public function getFieldValues(string $fieldName): array
+    {
+        $rtn = [];
+
+        foreach ( $this->_objDataSet as $item )
+        {
+            $rtn[] = $item->get($fieldName);
+        }
+
+        return $rtn;
+    }
+
+    /**
+     * Provide the item that has the largest value for the specified field.
+     * If all the field values in question are null, the top item in the list
+     * is returned.
+     *
+     */
+    public function max(string $fieldName): ?DBObject
+    {
+        if ( $this->count() == 0 )
+        {
+            return null;
+        }
+
+        $topItem = $this->top();
+
+        foreach ( $this->_objDataSet as $item )
+        {
+            if ( $item->get($fieldName) === null )
+            {
+                continue;
+            }
+
+            if ( $item->get($fieldName) > $topItem->get($fieldName) )
+            {
+                $topItem = $item;
+            }
+        }
+
+        return $topItem;
+    }
+
+    /**
+     * Provide the item that has the smallest value for the specified field.
+     * If all the field values in question are null, the top item in the list
+     * is returned.
+     *
+     * Null values are not used in the comparisons.
+     *
+     */
+    public function min(string $fieldName): ?DBObject
+    {
+        if ( $this->count() == 0 )
+        {
+            return null;
+        }
+
+        $topItem = $this->top();
+
+        foreach ( $this->_objDataSet as $item )
+        {
+            if ( $item->get($fieldName) === null )
+            {
+                continue;
+            }
+
+            if ( $item->get($fieldName) < $topItem->get($fieldName) )
+            {
+                $topItem = $item;
+            }
+        }
+
+        return $topItem;
+    }
+
+    /**
+     * Removes all the objects from the set.  Does not remove them from the DB
+     *
+     */
+    public function clear(): static
+    {
+        $this->_objDataSet = [];
+
+        return $this;
+    }
+
+    /**
+     * Remove the specified index from the set.
+     *
+     */
+    public function remove(int $index): static
+    {
+        if ( isset($this->_objDataSet[$index]) )
+        {
+            unset($this->_objDataSet[$index]);
+        }
+
+        return $this;
     }
 
     /**
@@ -158,7 +575,7 @@ class Set extends DBObject\Item\Set implements DBSetInterface
      * Fetches an item based on the primary key value
      *
      */
-    public function getPk(int|string $pkVal): ?Item
+    public function getPk(int|string $pkVal): ?DBObject
     {
         $pkField = $this->_objItem->getPrimaryKeyField();
 
@@ -200,141 +617,74 @@ class Set extends DBObject\Item\Set implements DBSetInterface
     }
 
     /**
-     * Run the assembled query and apply it to the data set
+     * Initialize the SQL driver and fill in the table into the FROM clause
      *
      */
-    public function run(): static
+    private function initSqlDriver(): void
     {
-        try
-        {
-            $sth = $this->getRunStatement();
-        }
-        catch ( Exception )
-        {
-            return $this;
-        }
+        $driverType = $this->getDb()->getAttribute(PDO::ATTR_DRIVER_NAME);
+        $sqlDriver = null;
 
-        while ( $row = $sth->fetch(PDO::FETCH_ASSOC) )
+        switch ( $driverType )
         {
-            $item = $this->getNewItem();
+            case self::POSTGRESQL:
+                $sqlDriver = new DBSql\PostgreSQL;
+                break;
 
-            foreach ( $row as $field => $value )
-            {
-                $item->set($field, $value);
-                $item->setLoadStatus(CrudInterface::LOADED);
-            }
-
-            $this->_objDataSet[] = $item;
+            case self::MYSQL:
+                $sqlDriver = new DBSql\MySQL;
+                break;
         }
 
-        return $this;
-    }
-
-    /**
-     * Add a filter with bound values
-     *
-     */
-    public function addFilter(string $whereClause, mixed $bindings = null): static
-    {
-        $this->getSqlSelect()->where($whereClause, $bindings);
-
-        return $this;
-    }
-
-    /**
-     * Adds a filter where a field must have a value in one of the items in
-     * an array.
-     *
-     */
-    public function addValueInFilter(string $fieldName, array $values): static
-    {
-        $this->getSqlSelect()->whereIn($fieldName, $values);
-
-        return $this;
-    }
-
-    /**
-     * Adds a filter where a field's value must exist within a sub-select SQL
-     *
-     */
-    public function addValueInSQL(string $fieldName, SelectInterface $sql): static
-    {
-        $this->getSqlSelect()->whereInSub($fieldName, $sql);
-
-        return $this;
-    }
-
-    /**
-     * Clear all the filters from the SQL statement
-     *
-     */
-    public function clearFilter(): static
-    {
-        $this->getSqlSelect()->whereReset();
-
-        return $this;
-    }
-
-    /**
-     * Add a sort field to the ordering of this set
-     *
-     */
-    public function addOrder(string $fieldName, string $direction = null): static
-    {
-        $this->getSqlSelect()->order($fieldName, $direction);
-
-        return $this;
-    }
-
-    /**
-     * Clear out all field ordering that may have been specified
-     *
-     */
-    public function clearOrder(): static
-    {
-        $this->getSqlSelect()->orderReset();
-
-        return $this;
-    }
-
-    /**
-     * Limit the number of rows that will be returned
-     *
-     */
-    public function setLimit(int $rowCount): static
-    {
-        $this->getSqlSelect()->limit($rowCount);
-
-        return $this;
-    }
-
-    /**
-     * Set the offset for where to start the result set
-     *
-     */
-    public function setOffset(int $startRow): static
-    {
-        $this->getSqlSelect()->offset($startRow);
-
-        return $this;
-    }
-
-    /**
-     * Filters the list based on the primary key value of the DBObject passed
-     * in.
-     *
-     */
-    public function addDBObjectFilter(DBObject $dbo, string $keyField = null): static
-    {
-        $field = $keyField;
-
-        if ( is_null($field) )
+        if ( is_null($sqlDriver) )
         {
-            $field = $dbo->getDBTable()->getPrimaryKeys()[0];
+            return;
         }
 
-        $this->getSqlSelect()->where( $field.' = ?', $dbo->getId() );
+        $this->_sqlSelect = $sqlDriver->select();
+        $this->_sqlSelect->from($this->_objItem->getDBTable()->getFQN());
+    }
+
+    /**
+     * Provide the SQL SELECT statement
+     *
+     */
+    public function getSqlSelect(): DBSql\SelectInterface
+    {
+        return $this->_sqlSelect;
+    }
+
+    /* -- Support for SPL interfaces from this point down -- */
+
+    public function count(): int
+    {
+        return count($this->_objDataSet);
+    }
+
+    public function rewind(): static
+    {
+        reset($this->_objDataSet);
 
         return $this;
+    }
+
+    public function current(): DBObject
+    {
+        return current($this->_objDataSet);
+    }
+
+    public function key(): int
+    {
+        return key($this->_objDataSet);
+    }
+
+    public function next(): DBObject
+    {
+        return next($this->_objDataSet);
+    }
+
+    public function valid(): bool
+    {
+        return key($this->_objDataSet) !== null;
     }
 }
