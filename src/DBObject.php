@@ -9,7 +9,10 @@
 namespace Metrol;
 
 use Metrol;
+use Metrol\DBObject\{CrudInterface, ItemInterface};
 use PDO;
+use JsonSerializable;
+use Iterator;
 use UnderflowException;
 
 /**
@@ -17,8 +20,7 @@ use UnderflowException;
  * and deleting the information.
  *
  */
-class DBObject extends Metrol\DBObject\Item
-    implements Metrol\DBObject\CrudInterface
+class DBObject implements CrudInterface, ItemInterface, JsonSerializable, Iterator
 {
     /**
      * The virtual primary key field that can be used in place of having to
@@ -26,6 +28,12 @@ class DBObject extends Metrol\DBObject\Item
      *
      */
     const VIRTUAL_PK_FIELD = 'id';
+
+    /**
+     * The data for this object in key/value pairs
+     *
+     */
+    protected array $_objData = [];
 
     /**
      * The database table that this item will be acting as a front end for
@@ -57,10 +65,21 @@ class DBObject extends Metrol\DBObject\Item
      */
     public function __construct(DBTable $table, PDO $databaseConnection)
     {
-        parent::__construct();
-
         $this->_objTable = $table;
         $this->_objDb    = $databaseConnection;
+    }
+
+    public function __get(string $field): mixed
+    {
+        return $this->get($field);
+    }
+
+    /**
+     *
+     */
+    public function __set(string $field, mixed $value)
+    {
+        return $this->set($field, $value);
     }
 
     /**
@@ -83,6 +102,15 @@ class DBObject extends Metrol\DBObject\Item
     }
 
     /**
+     * Provide the object data to support json_encode
+     *
+     */
+    public function jsonSerialize(): array
+    {
+        return $this->_objData;
+    }
+
+    /**
      * Fetches a value from the specified field
      *
      */
@@ -92,9 +120,13 @@ class DBObject extends Metrol\DBObject\Item
 
         if ( $this->getDBTable()->fieldExists($field) )
         {
-            $fldValue = parent::get($field);
+            if ( isset($this->_objData[$field]) )
+            {
+                $fldValue = $this->_objData[$field];
 
-            $rtn = $this->getDBTable()->getField($field)->getPHPValue($fldValue);
+                $rtn = $this->getDBTable()->getField($field)->getPHPValue($fldValue);
+            }
+
         }
         elseif ( $field == self::VIRTUAL_PK_FIELD )
         {
@@ -112,13 +144,43 @@ class DBObject extends Metrol\DBObject\Item
     {
         if ( $this->getDBTable()->fieldExists($field) )
         {
-            parent::set($field, $this->getDBTable()->getField($field)
-                                     ->getPHPValue($value));
+            $this->_objData[$field] = $this->getDBTable()
+                                           ->getField($field)
+                                           ->getPHPValue($value);
         }
         elseif ( $field == self::VIRTUAL_PK_FIELD )
         {
             $this->setId($value);
         }
+
+        return $this;
+    }
+
+    /**
+     * Provide a list of fields that have been set in this object
+     *
+     */
+    public function keys(): array
+    {
+        return array_keys($this->_objData);
+    }
+
+    /**
+     * Provide the entire contents of the data array being stored here
+     *
+     */
+    public function getData(): array
+    {
+        return $this->_objData;
+    }
+
+    /**
+     * Resets the data in this object.
+     *
+     */
+    public function clear(): static
+    {
+        $this->_objData = [];
 
         return $this;
     }
@@ -442,15 +504,6 @@ class DBObject extends Metrol\DBObject\Item
     }
 
     /**
-     * Fetch the last SQL statement that this object ran
-     *
-     */
-    public function getLastSqlStatement(): DBSql\StatementInterface
-    {
-        return $this->_sqlStatement;
-    }
-
-    /**
      * Provide the SQL Driver based on the type of DBTable provided
      *
      * @return DBSql\DriverInterface
@@ -607,5 +660,43 @@ class DBObject extends Metrol\DBObject\Item
         $statement->execute($sqlBinding);
 
         $this->_sqlStatement = $update;
+    }
+
+    /* -- Support for SPL interfaces from this point down -- */
+
+    /**
+     * How many fields have been set
+     *
+     */
+    public function count(): int
+    {
+        return count($this->_objData);
+    }
+
+    public function rewind(): static
+    {
+        reset($this->_objData);
+
+        return $this;
+    }
+
+    public function current(): mixed
+    {
+        return current($this->_objData);
+    }
+
+    public function key(): string
+    {
+        return key($this->_objData);
+    }
+
+    public function next(): mixed
+    {
+        return next($this->_objData);
+    }
+
+    public function valid(): bool
+    {
+        return key($this->_objData) !== null;
     }
 }

@@ -15,7 +15,7 @@ use Iterator;
  * Acts as a generic holding object that can be fed dynamic information
  *
  */
-class Item implements JsonSerializable, Iterator
+class Item implements ItemInterface, JsonSerializable, Iterator
 {
     /**
      * The data for this object in key/value pairs
