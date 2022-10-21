@@ -53,6 +53,11 @@ class PostgreSQLObjectTest extends TestCase
         $this->db = DBConnect\Connect\Bank::get();
     }
 
+    public function tearDown(): void
+    {
+        $this->clearTable();
+    }
+
     /**
      * Disconnect from the database
      *
