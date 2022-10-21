@@ -3,9 +3,8 @@
  * @author        Michael Collette <metrol@metrol.net>
  * @package       Metrol/DBObject
  * @version       1.0
- * @copyright (c) 2016, Michael Collette
+ * @copyright (c) 2022, Michael Collette
  */
-
 
 namespace Metrol\Tests;
 
@@ -15,7 +14,7 @@ use Metrol\DBTable;
 use PDO;
 
 /**
- * A sample database object that directly extends DBObject\Item using a
+ * A sample database object that directly extends DBObject using a
  * PostgreSQL table.
  *
  * @property integer  $primaryKeyID The primary key
@@ -39,16 +38,14 @@ use PDO;
  * @property string   $yeahnay      Enumerated Field
  * @property boolean  $trueorfalse  Boolean field
  * @property array    $xypoint      Point
+ * @property boolean  $falsedef     Default value testing
+ * @property boolean  $truedef     Default value testing
  *
  */
 class objtest1 extends DBObject
 {
     const TBL_NAME = 'pgtable1';
 
-    /**
-     *
-     * @param PDO $db
-     */
     public function __construct(PDO $db)
     {
         $table = new DBTable\PostgreSQL(self::TBL_NAME);
