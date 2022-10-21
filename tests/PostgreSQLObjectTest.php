@@ -242,4 +242,29 @@ TEXT;
         $this->assertEquals(78.123, $dbo->xypoint[0]);
         $this->assertEquals(-54.568, $dbo->xypoint[1]);
     }
+
+    public function testSettingNulls(): void
+    {
+        $dbo = new objtest1($this->db);
+        $dbo->dateone = '2030-09-30';
+        $dbo->datetwo = '2050-12-02 15:42';
+        $id = $dbo->save()->getId();
+
+        $dbo2 = new objtest1($this->db);
+        $dbo2->load($id);
+
+        $this->assertEquals('2030-09-30', $dbo2->dateone->format('Y-m-d'));
+        $this->assertEquals('2050-12-02 15:42', $dbo2->datetwo->format('Y-m-d H:i'));
+
+        // Now set those values to null and save
+        $dbo2->dateone = null;
+        $dbo2->datetwo = null;
+        $dbo2->save();
+
+        $dbo3 = new objtest1($this->db);
+        $dbo3->load($id);
+
+        $this->assertNull($dbo3->dateone);
+        $this->assertNull($dbo3->datetwo);
+    }
 }
