@@ -35,12 +35,12 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
      * The object type that will be making up this set.
      *
      */
-    protected DBObject $_objItem;
+    protected CrudInterface $_objItem;
 
     /**
      * The record data for this object in key/value pairs
      *
-     * @var DBObject[]
+     * @var CrudInterface[]
      */
     protected array $_objDataSet = [];
 
@@ -60,7 +60,7 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
      * Instantiate the object and store the sample DB Item as a reference
      *
      */
-    public function __construct(DBObject $dbObject)
+    public function __construct(CrudInterface $dbObject)
     {
         $this->_objItem = $dbObject;
         $this->_db      = $dbObject->getDb();
@@ -194,7 +194,7 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
      * in.
      *
      */
-    public function addDBObjectFilter(DBObject $dbo, string $keyField = null): static
+    public function addDBObjectFilter(CrudInterface $dbo, string $keyField = null): static
     {
         $field = $keyField;
 
@@ -262,7 +262,7 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
     /**
      * Provide the entire result set
      *
-     * @return DBObject[]
+     * @return CrudInterface[]
      */
     public function output(): array
     {
@@ -301,7 +301,7 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
      * Fetch a single item based on the index value of the data set
      *
      */
-    public function get(int $index): ?DBObject
+    public function get(int $index): ?CrudInterface
     {
         $rtn = null;
 
@@ -317,7 +317,7 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
      * Adds an item to the set
      *
      */
-    public function add(DBObject $dbo): static
+    public function add(CrudInterface $dbo): static
     {
         if ( $dbo instanceof $this->_objItem )
         {
@@ -331,7 +331,7 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
      * Fetching the first item off the top of the list
      *
      */
-    public function top(): DBObject
+    public function top(): CrudInterface
     {
         $this->rewind();
 
@@ -353,7 +353,7 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
      * Find the first item with specified field matching the specified value
      *
      */
-    public function find(string $fieldName, mixed $findValue): ?DBObject
+    public function find(string $fieldName, mixed $findValue): ?CrudInterface
     {
         $rtn = null;
 
@@ -412,7 +412,7 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
      * is returned.
      *
      */
-    public function max(string $fieldName): ?DBObject
+    public function max(string $fieldName): ?CrudInterface
     {
         if ( $this->count() == 0 )
         {
@@ -445,7 +445,7 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
      * Null values are not used in the comparisons.
      *
      */
-    public function min(string $fieldName): ?DBObject
+    public function min(string $fieldName): ?CrudInterface
     {
         if ( $this->count() == 0 )
         {
@@ -534,9 +534,6 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
             $this->getDb()->beginTransaction();
         }
 
-        /**
-         * @var CrudInterface $item
-         */
         foreach ( $this as $item )
         {
             $item->delete();
@@ -569,9 +566,6 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
             $this->getDb()->beginTransaction();
         }
 
-        /**
-         * @var CrudInterface $item
-         */
         foreach ( $this as $item )
         {
             $item->save();
@@ -589,7 +583,7 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
      * Fetches an item based on the primary key value
      *
      */
-    public function getPk(int|string $pkVal): ?DBObject
+    public function getPk(int|string $pkVal): ?CrudInterface
     {
         $pkField = $this->_objItem->getPrimaryKeyField();
 
@@ -625,7 +619,7 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
      * populate.
      *
      */
-    public function getNewItem(): DBObject
+    public function getNewItem(): CrudInterface
     {
         return clone $this->_objItem;
     }
@@ -682,7 +676,7 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
         return $this;
     }
 
-    public function current(): DBObject
+    public function current(): CrudInterface
     {
         return current($this->_objDataSet);
     }
@@ -692,7 +686,7 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
         return key($this->_objDataSet);
     }
 
-    public function next(): DBObject
+    public function next(): CrudInterface
     {
         return next($this->_objDataSet);
     }
