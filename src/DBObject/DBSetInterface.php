@@ -8,7 +8,6 @@
 
 namespace Metrol\DBObject;
 
-use Metrol\DBObject;
 
 /**
  * Define the methods used to support a set of DBObjects
@@ -74,7 +73,7 @@ interface DBSetInterface
      * Adds an item to the set
      *
      */
-    public function add(DBObject $dbo): static;
+    public function add(CrudInterface $dbo): static;
 
     /**
      * Removes all the objects from the set.  Does not remove them from the DB
@@ -106,7 +105,7 @@ interface DBSetInterface
      * Fetches an item based on the primary key value
      *
      */
-    public function getPk(int|string $pkVal): ?DBObject;
+    public function getPk(int|string $pkVal): ?CrudInterface;
 
     /**
      * Fetch a list of all the primary key values in the list.  If no primary
@@ -119,7 +118,7 @@ interface DBSetInterface
      * Fetch a single item based on the index value of the data set
      *
      */
-    public function get(int $index): ?DBObject;
+    public function get(int $index): ?CrudInterface;
 
     /**
      * Remove the specified index from the set.
@@ -131,7 +130,7 @@ interface DBSetInterface
      * Fetching the first item off the top of the list
      *
      */
-    public function top(): DBObject;
+    public function top(): CrudInterface;
 
     /**
      * Reverse the order of the items in the data set
@@ -143,7 +142,7 @@ interface DBSetInterface
      * Find the first item with specified field matching the specified value
      *
      */
-    public function find(string $fieldName, mixed $findValue): ?DBObject;
+    public function find(string $fieldName, mixed $findValue): ?CrudInterface;
 
     /**
      * Find all items with the specified field matching the specified value
@@ -157,7 +156,7 @@ interface DBSetInterface
      * is returned.
      *
      */
-    public function max(string $fieldName): ?DBObject;
+    public function max(string $fieldName): ?CrudInterface;
 
     /**
      * Provide the item that has the smallest value for the specified field.
@@ -167,7 +166,7 @@ interface DBSetInterface
      * Null values are not used in the comparisons.
      *
      */
-    public function min(string $fieldName): ?DBObject;
+    public function min(string $fieldName): ?CrudInterface;
 
     /**
      * Fetch a list of values for a specific field from the dataset as a simple
