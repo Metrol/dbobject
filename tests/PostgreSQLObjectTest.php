@@ -259,6 +259,7 @@ TEXT;
         // Now set those values to null and save
         $dbo2->dateone = null;
         $dbo2->datetwo = null;
+        $dbo2->save();
 
         $dbo3 = new objtest1($this->db);
         $dbo3->load($id);
