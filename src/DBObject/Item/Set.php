@@ -619,7 +619,7 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
         return $this;
     }
 
-    public function current(): Item
+    public function current(): Item|false
     {
         return current($this->_objDataSet);
     }
@@ -629,7 +629,7 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
         return key($this->_objDataSet);
     }
 
-    public function next(): Item
+    public function next(): Item|false
     {
         return next($this->_objDataSet);
     }
