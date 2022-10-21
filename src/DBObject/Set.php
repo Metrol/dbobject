@@ -676,7 +676,7 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
         return $this;
     }
 
-    public function current(): CrudInterface
+    public function current(): CrudInterface|false
     {
         return current($this->_objDataSet);
     }
@@ -686,7 +686,7 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
         return key($this->_objDataSet);
     }
 
-    public function next(): CrudInterface
+    public function next(): CrudInterface|false
     {
         return next($this->_objDataSet);
     }
