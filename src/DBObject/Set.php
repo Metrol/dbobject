@@ -98,6 +98,20 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
     }
 
     /**
+     * Adds a filter with named bindings.  The addFilter() method only supports
+     * question marks as placeholders.
+     *
+     */
+    public function addFilterNamedBindings(string $whereClause, array $bindings): static
+    {
+        $sqlSel = $this->getSqlSelect();
+        $sqlSel->where($whereClause);
+        $sqlSel->setBindings($bindings);
+
+        return $this;
+    }
+
+    /**
      * Adds a filter where a field must have a value in one of the items in
      * an array.
      *
@@ -121,12 +135,12 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
     }
 
     /**
-     * Clear all the filters from the SQL statement
+     * Clear all the filters and bindings from the SQL statement
      *
      */
     public function clearFilter(): static
     {
-        $this->getSqlSelect()->whereReset();
+        $this->getSqlSelect()->whereReset()->initBindings();
 
         return $this;
     }
