@@ -370,6 +370,27 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
     }
 
     /**
+     * Find the index of the first item with specified field matching the
+     * specified value
+     *
+     */
+    public function findIndex(string $fieldName, mixed $findValue): ?int
+    {
+        $rtn = null;
+
+        foreach ( $this->_objDataSet as $itemIdx => $item )
+        {
+            if ( $item->get($fieldName) == $findValue )
+            {
+                $rtn = $itemIdx;
+                break;
+            }
+        }
+
+        return $rtn;
+    }
+
+    /**
      * Find all items with the specified field matching the specified value
      *
      * @return DBObject[]
