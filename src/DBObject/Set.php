@@ -604,11 +604,16 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
      * Fetches an item based on the primary key value
      *
      */
-    public function getPk(int|string $pkVal): ?CrudInterface
+    public function getPk(int|string|null $pkVal): ?CrudInterface
     {
+        if ( is_null($pkVal) )
+        {
+            return null;
+        }
+
         $pkField = $this->_objItem->getPrimaryKeyField();
 
-        if ( $pkField === null )
+        if ( is_null($pkField) )
         {
             return null;
         }
