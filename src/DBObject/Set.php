@@ -625,7 +625,6 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
      * Fetch a list of all the primary key values in the list.  If no primary
      * key, an empty array will be returned.
      *
-     * @return array
      */
     public function getPkValues(): array
     {

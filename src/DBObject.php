@@ -366,7 +366,12 @@ class DBObject implements CrudInterface, ItemInterface, JsonSerializable, Iterat
             $this->set($field, $value);
         }
 
-        $this->setId( $this->get($this->getPrimaryKeyField()) );
+        $primaryKeyField = $this->getPrimaryKeyField();
+
+        if ( ! is_null($primaryKeyField) )
+        {
+            $this->setId( $this->get($primaryKeyField) );
+        }
 
         $this->_objLoadStatus = self::LOADED;
 
