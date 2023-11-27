@@ -130,7 +130,7 @@ interface DBSetInterface
      * Fetching the first item off the top of the list
      *
      */
-    public function top(): CrudInterface;
+    public function top(): CrudInterface|false;
 
     /**
      * Reverse the order of the items in the data set

@@ -331,7 +331,7 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
      * Fetching the first item off the top of the list
      *
      */
-    public function top(): CrudInterface
+    public function top(): CrudInterface|false
     {
         $this->rewind();
 
