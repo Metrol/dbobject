@@ -189,7 +189,7 @@ class DBObject implements CrudInterface, ItemInterface, JsonSerializable, Iterat
      * Provides the primary key field for this object
      *
      */
-    public function getPrimaryKeyField(): ?string
+    public function getPrimaryKeyField(): string|null
     {
         $rtn = null;
 

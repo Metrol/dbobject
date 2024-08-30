@@ -71,7 +71,7 @@ interface CrudInterface
      * Provides the primary key field for this object
      *
      */
-    public function getPrimaryKeyField(): ?string;
+    public function getPrimaryKeyField(): string|null;
 
     /**
      * Saves the object out to the database.

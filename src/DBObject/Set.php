@@ -301,7 +301,7 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
      * Fetch a single item based on the index value of the data set
      *
      */
-    public function get(int $index): ?CrudInterface
+    public function get(int $index): CrudInterface|null
     {
         $rtn = null;
 
@@ -353,7 +353,7 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
      * Find the first item with specified field matching the specified value
      *
      */
-    public function find(string $fieldName, mixed $findValue): ?CrudInterface
+    public function find(string $fieldName, mixed $findValue): CrudInterface|null
     {
         $rtn = null;
 
@@ -374,7 +374,7 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
      * specified value
      *
      */
-    public function findIndex(string $fieldName, mixed $findValue): ?int
+    public function findIndex(string $fieldName, mixed $findValue): int|null
     {
         $rtn = null;
 
@@ -433,7 +433,7 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
      * is returned.
      *
      */
-    public function max(string $fieldName): ?CrudInterface
+    public function max(string $fieldName): CrudInterface|null
     {
         if ( $this->count() == 0 )
         {
@@ -466,7 +466,7 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
      * Null values are not used in the comparisons.
      *
      */
-    public function min(string $fieldName): ?CrudInterface
+    public function min(string $fieldName): CrudInterface|null
     {
         if ( $this->count() == 0 )
         {
@@ -604,7 +604,7 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
      * Fetches an item based on the primary key value
      *
      */
-    public function getPk(int|string|null $pkVal): ?CrudInterface
+    public function getPk(int|string|null $pkVal): CrudInterface|null
     {
         if ( is_null($pkVal) )
         {

@@ -83,7 +83,7 @@ interface ItemSetInterface
      * Fetch a single item based on the index value of the data set
      *
      */
-    public function get(int $index): ?Item;
+    public function get(int $index): Item|null;
 
     /**
      * Remove the specified index from the set.
@@ -107,7 +107,7 @@ interface ItemSetInterface
      * Find the first item with specified field matching the specified value
      *
      */
-    public function find(string $fieldName, mixed $findValue): ?Item;
+    public function find(string $fieldName, mixed $findValue): Item|null;
 
     /**
      * Find all items with the specified field matching the specified value
@@ -121,7 +121,7 @@ interface ItemSetInterface
      * is returned.
      *
      */
-    public function max(string $fieldName): ?Item;
+    public function max(string $fieldName): Item|null;
 
     /**
      * Provide the item that has the smallest value for the specified field.
@@ -131,7 +131,7 @@ interface ItemSetInterface
      * Null values are not used in the comparisons.
      *
      */
-    public function min(string $fieldName): ?Item;
+    public function min(string $fieldName): Item|null;
 
     /**
      * Fetch a list of values for a specific field from the dataset as a simple

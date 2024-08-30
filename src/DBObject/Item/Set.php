@@ -205,7 +205,7 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
      * worked with.
      *
      */
-    protected function getRunStatement(): ?PDOStatement
+    protected function getRunStatement(): PDOStatement|null
     {
         switch ( $this->_sqlToUse )
         {
@@ -396,7 +396,7 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
      * Fetch a single item based on the index value of the data set
      *
      */
-    public function get(int $index): ?Item
+    public function get(int $index): Item|null
     {
         $rtn = null;
 
@@ -448,7 +448,7 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
      * Find the first item with specified field matching the specified value
      *
      */
-    public function find(string $fieldName, mixed $findValue): ?Item
+    public function find(string $fieldName, mixed $findValue): Item|null
     {
         $rtn = null;
 
@@ -470,7 +470,7 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
      * is returned.
      *
      */
-    public function max(string $fieldName): ?Item
+    public function max(string $fieldName): Item|null
     {
         if ( $this->count() == 0 )
         {
@@ -503,7 +503,7 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
      * Null values are not used in the comparisons.
      *
      */
-    public function min(string $fieldName): ?Item
+    public function min(string $fieldName): Item|null
     {
         if ( $this->count() == 0 )
         {
@@ -636,6 +636,6 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
 
     public function valid(): bool
     {
-        return key($this->_objDataSet) !== null;
+        return ! is_null(key($this->_objDataSet));
     }
 }

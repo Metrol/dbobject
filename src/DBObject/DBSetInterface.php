@@ -105,7 +105,7 @@ interface DBSetInterface
      * Fetches an item based on the primary key value
      *
      */
-    public function getPk(int|string $pkVal): ?CrudInterface;
+    public function getPk(int|string $pkVal): CrudInterface|null;
 
     /**
      * Fetch a list of all the primary key values in the list.  If no primary
@@ -118,7 +118,7 @@ interface DBSetInterface
      * Fetch a single item based on the index value of the data set
      *
      */
-    public function get(int $index): ?CrudInterface;
+    public function get(int $index): CrudInterface|null;
 
     /**
      * Remove the specified index from the set.
@@ -142,7 +142,7 @@ interface DBSetInterface
      * Find the first item with specified field matching the specified value
      *
      */
-    public function find(string $fieldName, mixed $findValue): ?CrudInterface;
+    public function find(string $fieldName, mixed $findValue): CrudInterface|null;
 
     /**
      * Find all items with the specified field matching the specified value
@@ -156,7 +156,7 @@ interface DBSetInterface
      * is returned.
      *
      */
-    public function max(string $fieldName): ?CrudInterface;
+    public function max(string $fieldName): CrudInterface|null;
 
     /**
      * Provide the item that has the smallest value for the specified field.
@@ -166,7 +166,7 @@ interface DBSetInterface
      * Null values are not used in the comparisons.
      *
      */
-    public function min(string $fieldName): ?CrudInterface;
+    public function min(string $fieldName): CrudInterface|null;
 
     /**
      * Fetch a list of values for a specific field from the dataset as a simple
