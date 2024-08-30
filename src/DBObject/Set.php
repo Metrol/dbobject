@@ -149,7 +149,7 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
      * Add a sort field to the ordering of this set
      *
      */
-    public function addOrder(string $fieldName, string $direction = null): static
+    public function addOrder(string $fieldName, string|null $direction = null): static
     {
         $this->getSqlSelect()->order($fieldName, $direction);
 
@@ -194,7 +194,7 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
      * in.
      *
      */
-    public function addDBObjectFilter(CrudInterface $dbo, string $keyField = null): static
+    public function addDBObjectFilter(CrudInterface $dbo, string|null $keyField = null): static
     {
         $field = $keyField;
 

@@ -92,7 +92,7 @@ interface CrudInterface
      *
      * @throws UnderflowException When no primary keys are specified
      */
-    public function load(int|string $primaryKeyValue = null): static;
+    public function load(int|string|null $primaryKeyValue = null): static;
 
     /**
      * Allows the caller to specify exactly the criteria to be used to load

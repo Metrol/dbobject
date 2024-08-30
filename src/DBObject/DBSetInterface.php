@@ -31,7 +31,7 @@ interface DBSetInterface
      * Add a sort field to the ordering of this set
      *
      */
-    public function addOrder(string $fieldName, string $direction = null): static;
+    public function addOrder(string $fieldName, string|null $direction = null): static;
 
     /**
      * Clear out all field ordering that may have been specified

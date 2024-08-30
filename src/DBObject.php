@@ -207,7 +207,7 @@ class DBObject implements CrudInterface, ItemInterface, JsonSerializable, Iterat
      * Set the primary key value for this object
      *
      */
-    public function setId(int|string $value = null): static
+    public function setId(int|string|null $value = null): static
     {
         $pkField = $this->getPrimaryKeyField();
 
@@ -270,7 +270,7 @@ class DBObject implements CrudInterface, ItemInterface, JsonSerializable, Iterat
      * their values already set.
      *
      */
-    public function load(int|string $primaryKeyValue = null): static
+    public function load(int|string|null $primaryKeyValue = null): static
     {
         $primaryKey = $this->getDBTable()->getPrimaryKeys()[0];
 
