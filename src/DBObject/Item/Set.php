@@ -481,7 +481,7 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
 
         foreach ( $this->_objDataSet as $item )
         {
-            if ( $item->get($fieldName) === null )
+            if ( is_null($item->get($fieldName)) )
             {
                 continue;
             }
@@ -514,7 +514,7 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
 
         foreach ( $this->_objDataSet as $item )
         {
-            if ( $item->get($fieldName) === null )
+            if ( is_null($item->get($fieldName)) )
             {
                 continue;
             }
