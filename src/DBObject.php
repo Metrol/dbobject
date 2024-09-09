@@ -8,7 +8,6 @@
 
 namespace Metrol;
 
-use Metrol;
 use Metrol\DBObject\{CrudInterface, ItemInterface};
 use PDO;
 use JsonSerializable;
