@@ -123,7 +123,9 @@ class DBObject implements CrudInterface, ItemInterface, JsonSerializable, Iterat
             {
                 $fldValue = $this->_objData[$field];
 
-                $rtn = $this->getDBTable()->getField($field)->getPHPValue($fldValue);
+                $rtn = $this->getDBTable()
+                    ->getField($field)
+                    ->getPHPValue($fldValue);
             }
 
         }
