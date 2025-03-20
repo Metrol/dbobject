@@ -3,12 +3,11 @@
  * @author        Michael Collette <metrol@metrol.net>
  * @package       Metrol/DBObject
  * @version       1.0
- * @copyright (c) 2016, Michael Collette
+ * @copyright (c) 2025, Michael Collette
  */
 
 namespace Metrol\DBObject;
 
-use Metrol\DBObject;
 use Metrol\DBSql;
 use PDO;
 use Iterator;
@@ -20,6 +19,8 @@ use Exception;
  * Handles generating and storing a set of DBObjects supporting the CRUD
  * interface.
  *
+ * @template T
+ * @implements Iterator<int, T>
  */
 class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
 {
@@ -40,7 +41,7 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
     /**
      * The record data for this object in key/value pairs
      *
-     * @var CrudInterface[]
+     * @var T[]
      */
     protected array $_objDataSet = [];
 
@@ -262,7 +263,7 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
     /**
      * Provide the entire result set
      *
-     * @return CrudInterface[]
+     * @return T[]
      */
     public function output(): array
     {
@@ -300,6 +301,7 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
     /**
      * Fetch a single item based on the index value of the data set
      *
+     * @return T|null
      */
     public function get(int $index): CrudInterface|null
     {
@@ -330,6 +332,7 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
     /**
      * Fetching the first item off the top of the list
      *
+     * @return T|false
      */
     public function top(): CrudInterface|false
     {
@@ -352,6 +355,7 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
     /**
      * Find the first item with specified field matching the specified value
      *
+     * @return T|null
      */
     public function find(string $fieldName, mixed $findValue): CrudInterface|null
     {
@@ -393,7 +397,7 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
     /**
      * Find all items with the specified field matching the specified value
      *
-     * @return DBObject[]
+     * @return T[]
      */
     public function findAll(string $fieldName, mixed $findValue): array
     {
@@ -432,6 +436,7 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
      * If all the field values in question are null, the top item in the list
      * is returned.
      *
+     * @return T|null
      */
     public function max(string $fieldName): CrudInterface|null
     {
@@ -465,6 +470,7 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
      *
      * Null values are not used in the comparisons.
      *
+     * @return T|null
      */
     public function min(string $fieldName): CrudInterface|null
     {
@@ -603,6 +609,7 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
     /**
      * Fetches an item based on the primary key value
      *
+     * @return T|null
      */
     public function getPk(int|string|null $pkVal): CrudInterface|null
     {
@@ -643,6 +650,7 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
      * This is also used by the run() method to know which kind of object to
      * populate.
      *
+     * @return T
      */
     public function getNewItem(): CrudInterface
     {
@@ -701,6 +709,9 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
         return $this;
     }
 
+    /**
+     * @return T|false
+     */
     public function current(): CrudInterface|false
     {
         return current($this->_objDataSet);
@@ -711,6 +722,9 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
         return key($this->_objDataSet);
     }
 
+    /**
+     * @return T|null
+     */
     public function next(): CrudInterface|false
     {
         return next($this->_objDataSet);
