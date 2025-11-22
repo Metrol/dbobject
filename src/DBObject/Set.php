@@ -702,11 +702,9 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
         return count($this->_objDataSet);
     }
 
-    public function rewind(): static
+    public function rewind(): void
     {
         reset($this->_objDataSet);
-
-        return $this;
     }
 
     /**
@@ -722,12 +720,9 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
         return key($this->_objDataSet);
     }
 
-    /**
-     * @return T|null
-     */
-    public function next(): CrudInterface|false
+    public function next(): void
     {
-        return next($this->_objDataSet);
+        next($this->_objDataSet);
     }
 
     public function valid(): bool
