@@ -28,18 +28,18 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
      *
      * @const string
      */
-    const POSTGRESQL     = 'pgsql';
-    const MYSQL          = 'mysql';
+    const string POSTGRESQL = 'pgsql';
+    const string MYSQL      = 'mysql';
 
     /**
      * Flags for determining which SQL engine, or none at all, to use
      *
      * @const string
      */
-    const SQL_USE_SELECT = 'select';
-    const SQL_USE_UNION  = 'union';
-    const SQL_USE_WITH   = 'with';
-    const SQL_USE_RAW    = 'raw';
+    const string SQL_USE_SELECT = 'select';
+    const string SQL_USE_UNION  = 'union';
+    const string SQL_USE_WITH   = 'with';
+    const string SQL_USE_RAW    = 'raw';
 
     /**
      * The record data for this object in key/value pairs
@@ -612,11 +612,9 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
         return count($this->_objDataSet);
     }
 
-    public function rewind(): static
+    public function rewind(): void
     {
         reset($this->_objDataSet);
-
-        return $this;
     }
 
     public function current(): Item|false
@@ -629,9 +627,9 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
         return key($this->_objDataSet);
     }
 
-    public function next(): Item|false
+    public function next(): void
     {
-        return next($this->_objDataSet);
+        next($this->_objDataSet);
     }
 
     public function valid(): bool

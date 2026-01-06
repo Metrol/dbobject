@@ -129,11 +129,9 @@ class Item implements ItemInterface, JsonSerializable, Iterator
         return count($this->_objData);
     }
 
-    public function rewind(): static
+    public function rewind(): void
     {
         reset($this->_objData);
-
-        return $this;
     }
 
     public function current(): mixed
@@ -146,9 +144,9 @@ class Item implements ItemInterface, JsonSerializable, Iterator
         return key($this->_objData);
     }
 
-    public function next(): mixed
+    public function next(): void
     {
-        return next($this->_objData);
+        next($this->_objData);
     }
 
     public function valid(): bool

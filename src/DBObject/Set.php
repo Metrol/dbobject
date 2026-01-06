@@ -29,8 +29,8 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
      *
      * @const string
      */
-    const POSTGRESQL     = 'pgsql';
-    const MYSQL          = 'mysql';
+    const string POSTGRESQL = 'pgsql';
+    const string MYSQL      = 'mysql';
 
     /**
      * The object type that will be making up this set.

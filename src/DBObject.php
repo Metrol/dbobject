@@ -26,7 +26,7 @@ class DBObject implements CrudInterface, ItemInterface, JsonSerializable, Iterat
      * know the actual field name for most uses.
      *
      */
-    const VIRTUAL_PK_FIELD = 'id';
+    const string VIRTUAL_PK_FIELD = 'id';
 
     /**
      * The data for this object in key/value pairs
@@ -679,11 +679,9 @@ class DBObject implements CrudInterface, ItemInterface, JsonSerializable, Iterat
         return count($this->_objData);
     }
 
-    public function rewind(): static
+    public function rewind(): void
     {
         reset($this->_objData);
-
-        return $this;
     }
 
     public function current(): mixed
@@ -696,9 +694,9 @@ class DBObject implements CrudInterface, ItemInterface, JsonSerializable, Iterat
         return key($this->_objData);
     }
 
-    public function next(): mixed
+    public function next(): void
     {
-        return next($this->_objData);
+        next($this->_objData);
     }
 
     public function valid(): bool
