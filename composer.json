@@ -23,7 +23,7 @@
 
 
     "require" : {
-        "php"              : "8.4.*",
+        "php"              : "8.5.*",
         "metrol/dbsql"     : "dev-master",
         "metrol/dbtable"   : "dev-master",
         "metrol/dbconnect" : "dev-master",
