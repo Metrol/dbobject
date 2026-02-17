@@ -19,7 +19,7 @@ use Exception;
  * Handles generating and storing a set of DBObjects supporting the CRUD
  * interface.
  *
- * @template T
+ * @template T of CrudInterface
  * @implements Iterator<int, T>
  */
 class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
@@ -35,13 +35,14 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
     /**
      * The object type that will be making up this set.
      *
+     * @var T
      */
     protected CrudInterface $_objItem;
 
     /**
      * The record data for this object in key/value pairs
      *
-     * @var T[]
+     * @var array<T>
      */
     protected array $_objDataSet = [];
 
@@ -60,6 +61,7 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
     /**
      * Instantiate the object and store the sample DB Item as a reference
      *
+     * @param T $dbObject
      */
     public function __construct(CrudInterface $dbObject)
     {
@@ -318,6 +320,7 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
     /**
      * Adds an item to the set
      *
+     * @param T $dbo
      */
     public function add(CrudInterface $dbo): static
     {
@@ -386,7 +389,7 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
         {
             if ( $item->get($fieldName) == $findValue )
             {
-                $rtn = $itemIdx;
+                $rtn = intval($itemIdx);
                 break;
             }
         }
@@ -440,21 +443,35 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
      */
     public function max(string $fieldName): CrudInterface|null
     {
-        if ( $this->count() == 0 )
+        if ( $this->count() === 0 )
         {
             return null;
         }
 
         $topItem = $this->top();
 
+        if ( $topItem === false )
+        {
+            return null;
+        }
+
         foreach ( $this->_objDataSet as $item )
         {
-            if ( $item->get($fieldName) === null )
+            $topValue = $topItem->get($fieldName);
+
+            if ( $topValue === null )
             {
                 continue;
             }
 
-            if ( $item->get($fieldName) > $topItem->get($fieldName) )
+            $itemValue = $item->get($fieldName);
+
+            if ( $itemValue === null )
+            {
+                continue;
+            }
+
+            if ( $itemValue > $topValue )
             {
                 $topItem = $item;
             }
@@ -481,14 +498,28 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
 
         $topItem = $this->top();
 
+        if ( $topItem === false )
+        {
+            return null;
+        }
+
         foreach ( $this->_objDataSet as $item )
         {
-            if ( $item->get($fieldName) === null )
+            $topValue = $topItem->get($fieldName);
+
+            if ( $topValue === null )
             {
                 continue;
             }
 
-            if ( $item->get($fieldName) < $topItem->get($fieldName) )
+            $itemValue = $item->get($fieldName);
+
+            if ( $itemValue === null )
+            {
+                continue;
+            }
+
+            if ( $itemValue < $topValue )
             {
                 $topItem = $item;
             }
@@ -717,7 +748,7 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
 
     public function key(): int
     {
-        return key($this->_objDataSet);
+        return intval(key($this->_objDataSet));
     }
 
     public function next(): void
