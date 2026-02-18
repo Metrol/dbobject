@@ -95,7 +95,7 @@ interface ItemSetInterface
      * Fetching the first item off the top of the list
      *
      */
-    public function top(): Item;
+    public function top(): Item|false;
 
     /**
      * Reverse the order of the items in the data set

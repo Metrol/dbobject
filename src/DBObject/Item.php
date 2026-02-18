@@ -14,6 +14,7 @@ use Iterator;
 /**
  * Acts as a generic holding object that can be fed dynamic information
  *
+ * @implements Iterator<string, mixed>
  */
 class Item implements ItemInterface, JsonSerializable, Iterator
 {
@@ -42,9 +43,9 @@ class Item implements ItemInterface, JsonSerializable, Iterator
     /**
      *
      */
-    public function __set(string $field, mixed $value)
+    public function __set(string $field, mixed $value): void
     {
-        return $this->set($field, $value);
+        $this->set($field, $value);
     }
 
     /**
@@ -141,7 +142,7 @@ class Item implements ItemInterface, JsonSerializable, Iterator
 
     public function key(): string
     {
-        return key($this->_objData);
+        return strval(key($this->_objData));
     }
 
     public function next(): void

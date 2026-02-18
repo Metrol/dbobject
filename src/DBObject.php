@@ -18,6 +18,7 @@ use UnderflowException;
  * Maps itself to a database record for the purposes of creating, updating,
  * and deleting the information.
  *
+ * @implements Iterator<string, mixed>
  */
 class DBObject implements CrudInterface, ItemInterface, JsonSerializable, Iterator
 {
@@ -76,9 +77,9 @@ class DBObject implements CrudInterface, ItemInterface, JsonSerializable, Iterat
     /**
      *
      */
-    public function __set(string $field, mixed $value)
+    public function __set(string $field, mixed $value): void
     {
-        return $this->set($field, $value);
+        $this->set($field, $value);
     }
 
     /**
@@ -117,17 +118,20 @@ class DBObject implements CrudInterface, ItemInterface, JsonSerializable, Iterat
     {
         $rtn = null;
 
-        if ( $this->getDBTable()->fieldExists($field) )
+        $table = $this->getDbTable();
+
+        if ( $table->fieldExists($field) )
         {
             if ( isset($this->_objData[$field]) )
             {
                 $fldValue = $this->_objData[$field];
+                $fldObj   = $table->getField($field);
 
-                $rtn = $this->getDBTable()
-                    ->getField($field)
-                    ->getPHPValue($fldValue);
+                if ( ! is_null($fldObj) )
+                {
+                    $rtn = $fldObj->getPHPValue($fldValue);
+                }
             }
-
         }
         elseif ( $field == self::VIRTUAL_PK_FIELD )
         {
@@ -143,11 +147,16 @@ class DBObject implements CrudInterface, ItemInterface, JsonSerializable, Iterat
      */
     public function set(string $field, mixed $value): static
     {
-        if ( $this->getDBTable()->fieldExists($field) )
+        $table = $this->getDbTable();
+
+        if ( $table->fieldExists($field) )
         {
-            $this->_objData[$field] = $this->getDBTable()
-                                           ->getField($field)
-                                           ->getPHPValue($value);
+            $fldObj = $table->getField($field);
+
+            if ( ! is_null($fldObj) )
+            {
+                $this->_objData[$field] = $fldObj->getPHPValue($value);
+            }
         }
         elseif ( $field == self::VIRTUAL_PK_FIELD )
         {
@@ -314,7 +323,7 @@ class DBObject implements CrudInterface, ItemInterface, JsonSerializable, Iterat
             $this->set($field, $value);
         }
 
-        $this->setId( $this->get($this->getPrimaryKeyField()) );
+        $this->setId( $this->get($this->getPrimaryKeyField() ?? '') );
         $this->_objLoadStatus = self::LOADED;
 
         return $this;
@@ -468,16 +477,23 @@ class DBObject implements CrudInterface, ItemInterface, JsonSerializable, Iterat
         $delete = $this->getSqlDriver()->delete();
         $delete->table( $this->getDBTable()->getFQN() );
 
+        $table = $this->getDBTable();
+
         foreach ( $primaryKeys as $primaryKey )
         {
-            $pKeyFv = $this->getDBTable()
-                ->getField($primaryKey)
-                ->getSqlBoundValue($this->get($primaryKey));
+            $fldObj = $table->getField($primaryKey);
 
-            $marker = $pKeyFv->getValueMarker();
+            if ( is_null($fldObj) )
+            {
+                continue;
+            }
+
+            $pKeyFv = $fldObj->getSqlBoundValue($this->get($primaryKey ?? ''));
+
+            $marker = $pKeyFv->getValueMarker() ?? '';
             $value  = $pKeyFv->getBoundValues()[$marker];
 
-            $delete->where($primaryKey.' = ' . $marker );
+            $delete->where($primaryKey.' = ' . $marker);
             $delete->setBinding($marker, $value);
         }
 
@@ -541,6 +557,11 @@ class DBObject implements CrudInterface, ItemInterface, JsonSerializable, Iterat
 
         foreach ( $fields as $field )
         {
+            if ( $field === false )
+            {
+                continue;
+            }
+
             $fieldName = $field->getName();
 
             // Do not include a primary key field that doesn't have a value
@@ -620,6 +641,11 @@ class DBObject implements CrudInterface, ItemInterface, JsonSerializable, Iterat
 
         foreach ( $fields as $field )
         {
+            if ( $field === false )
+            {
+                continue;
+            }
+
             $fieldName = $field->getName();
 
             // Primary keys do not get updated here.  They're criteria for what
@@ -645,14 +671,21 @@ class DBObject implements CrudInterface, ItemInterface, JsonSerializable, Iterat
             $update->addFieldValue($sqlFv);
         }
 
+        $table = $this->getDBTable();
+
         foreach ( $primaryKeys as $primaryKey )
         {
-            $pKeyFv = $this->getDBTable()
-                          ->getField($primaryKey)
-                          ->getSqlBoundValue( $this->get($primaryKey) );
+            $fldObj = $table->getField($primaryKey);
+
+            if ( is_null($fldObj) )
+            {
+                continue;
+            }
+
+            $pKeyFv = $fldObj->getSqlBoundValue( $this->get($primaryKey) );
 
             $fieldName = $pKeyFv->getFieldName();
-            $marker    = $pKeyFv->getValueMarker();
+            $marker    = $pKeyFv->getValueMarker() ?? '';
             $value     = $pKeyFv->getBoundValues()[$marker];
 
             $update->where($fieldName . ' = ' . $marker);
@@ -691,7 +724,7 @@ class DBObject implements CrudInterface, ItemInterface, JsonSerializable, Iterat
 
     public function key(): string
     {
-        return key($this->_objData);
+        return strval(key($this->_objData));
     }
 
     public function next(): void

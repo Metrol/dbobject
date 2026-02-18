@@ -20,6 +20,8 @@ use PDOStatement;
 /**
  * Handles generating and storing a set of database records as object
  *
+ * @template T of Item
+ * @implements Iterator<int, T>
  */
 class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
 {
@@ -44,7 +46,7 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
     /**
      * The record data for this object in key/value pairs
      *
-     * @var Item[]
+     * @var array<T>
      */
     protected array $_objDataSet = [];
 
@@ -130,10 +132,15 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
     /**
      * Generates a new Item that can be stored in this set.
      *
+     * @return T
      */
     public function getNewItem(): Item
     {
-        return new Item;
+        /**
+         * @var T $item
+         */
+        $item = new Item;
+        return $item;
     }
 
     /**
@@ -395,6 +402,7 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
     /**
      * Fetch a single item based on the index value of the data set
      *
+     * @return T|null
      */
     public function get(int $index): Item|null
     {
@@ -425,8 +433,9 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
     /**
      * Fetching the first item off the top of the list
      *
+     * @return T|false
      */
-    public function top(): Item
+    public function top(): Item|false
     {
         $this->rewind();
 
@@ -469,6 +478,7 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
      * If all the field values in question are null, the top item in the list
      * is returned.
      *
+     * @return T|null
      */
     public function max(string $fieldName): Item|null
     {
@@ -479,14 +489,28 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
 
         $topItem = $this->top();
 
+        if ( $topItem === false )
+        {
+            return null;
+        }
+
         foreach ( $this->_objDataSet as $item )
         {
-            if ( is_null($item->get($fieldName)) )
+            $topValue = $topItem->get($fieldName);
+
+            if ( $topValue === null )
             {
                 continue;
             }
 
-            if ( $item->get($fieldName) > $topItem->get($fieldName) )
+            $itemValue = $item->get($fieldName);
+
+            if ( $itemValue === null )
+            {
+                continue;
+            }
+
+            if ( $itemValue > $topValue )
             {
                 $topItem = $item;
             }
@@ -512,14 +536,28 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
 
         $topItem = $this->top();
 
+        if ( $topItem === false )
+        {
+            return null;
+        }
+
         foreach ( $this->_objDataSet as $item )
         {
-            if ( is_null($item->get($fieldName)) )
+            $topValue = $topItem->get($fieldName);
+
+            if ( $topValue === null )
             {
                 continue;
             }
 
-            if ( $item->get($fieldName) < $topItem->get($fieldName) )
+            $itemValue = $item->get($fieldName);
+
+            if ( $itemValue === null )
+            {
+                continue;
+            }
+
+            if ( $itemValue < $topValue )
             {
                 $topItem = $item;
             }
@@ -624,7 +662,7 @@ class Set implements ItemSetInterface, Iterator, Countable, JsonSerializable
 
     public function key(): int
     {
-        return key($this->_objDataSet);
+        return intval(key($this->_objDataSet));
     }
 
     public function next(): void
