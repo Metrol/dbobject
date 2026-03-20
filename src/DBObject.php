@@ -282,7 +282,15 @@ class DBObject implements CrudInterface, ItemInterface, JsonSerializable, Iterat
      */
     public function load(int|string|null $primaryKeyValue = null): static
     {
-        $primaryKey = $this->getDBTable()->getPrimaryKeys()[0];
+        $table       = $this->getDBTable();
+        $primaryKeys = $table->getPrimaryKeys();
+
+        if ( empty($primaryKeys) )
+        {
+            return $this;
+        }
+
+        $primaryKey = $primaryKeys[0];
 
         if ( $primaryKeyValue === null )
         {
@@ -300,7 +308,7 @@ class DBObject implements CrudInterface, ItemInterface, JsonSerializable, Iterat
 
 
         $sql = $this->getSqlDriver()->select()
-                    ->from( $this->getDBTable()->getFQN() )
+                    ->from( $table->getFQN() )
                     ->where( $primaryKey . ' = ?', $id);
 
         $this->_sqlStatement = $sql;
