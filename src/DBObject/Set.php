@@ -714,7 +714,8 @@ class Set implements DBSetInterface, Iterator, Countable, JsonSerializable
         }
 
         $this->_sqlSelect = $sqlDriver->select();
-        $this->_sqlSelect->from($this->_objItem->getDBTable()->getFQN());
+        $fqnTable = $this->_objItem->getDBTable()->getFQN() . ' obj';
+        $this->_sqlSelect->from($fqnTable);
     }
 
     /**
